@@ -142,7 +142,7 @@ ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) +
 
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
-incoming_longwave_radiation_initial <- COHM |> 
+incoming_longwave_radiation_initial <- BOYM |> 
   select(metlocid, date_time, lwradin2_wm2)
 
 
@@ -334,6 +334,7 @@ if (length(airt_interp) != length(time_model) |
   stop("Length of interpolated data does not match the model time steps!")
 }
 
+alb_altered = 0.1402 + ((albedo_interp)*0.95)
 
 ###################### Create the time series tibble for model time ######################
 time_series <- tibble(
@@ -342,8 +343,8 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 0.1402 + ((albedo_interp)*0.7212),  # albedo, unitless (lower albedo value from measured BOYM data)
-  #albedo = albedo_interp,                   # Constant albedo (can be replaced with a time series if needed)
+  #albedo = 0.1402 + ((albedo_interp)*0.95),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = alb_altered*1.00,                   # Constant albedo (can be replaced with a time series if needed)
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
   delta_T = T_air - lag(T_air),             # difference in air temperature, for later flux calculation
@@ -525,16 +526,15 @@ for (t_idx in 1:nrow(time_series)) {
 }
 
 ###################### plotting of results ######################
-results %>%
+plot3 <- results |> 
   group_by(time) %>%
-  summarize(thickness = max(thickness)) %>%
+  summarize(thickness = max(thickness)) |> 
   ggplot(aes(x = time, y = thickness)) +
   geom_line(color = "red", size = 1) +
-  labs(x = "Time (days)", y = "Ice Thickness (m)",
-       title = "East Lake Bonney Modeled Ice Thickness over Time", 
-       subtitle = "GEE") +
+  labs(x = "Time", y = "Ice Thickness (m)",
+       title = "Albedo Raised at Tuned Values") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
-  theme_bw()
+  theme_minimal(base_size = 15)
 
 #troubleshooting plots, to find distance of change at top and bottom
 plot(dL_bottom.vec)
@@ -545,10 +545,12 @@ ggplot(series, aes(time, data)) +
   geom_line() + 
   xlab("Date") + ylab("Value") +
   facet_wrap(vars(variable), scales = "free") + 
-  theme_minimal()
+  theme_minimal(base_size = 15)
+
+ggarrange(plot1, plot3, plot2, nrow=1)
 
 # save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250221.csv")
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250221_5%_high.csv")
 
 # Plot temperature profiles at selected time steps
 results %>%
