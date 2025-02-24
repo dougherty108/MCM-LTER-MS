@@ -2,9 +2,10 @@
 
 library(tidyverse)
 
-s_total <- read_csv("data/GEE/total_Sentinel.csv") |> 
-  rename(`File ID` = `ImageID (solar elevation)`) |> 
-  select(`File ID`)
+s_total <- read_csv("data/satellite image repos/Landsat 8 Image Repository.csv") |> 
+  filter(`Cloud Free (Y/N/P)` == "Y" &
+         `Coverage of lakes` == "All" | `Coverage of lakes` == "LF" &
+           `Snow Cover (Y/N/P)` == "N")
 
 s_filt <- read_csv("data/GEE/Sentinel Image Repo.csv") |> 
   drop_na(`Cloud Free (Y/N/P)`)

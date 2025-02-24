@@ -111,3 +111,9 @@ ggsave("plots/GEE/alllakes/analysis plots/wholelakesed_vsthickness.png", width =
 
 
 
+
+
+
+
+
+
