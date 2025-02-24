@@ -5,9 +5,9 @@ library(tidyverse)
 
 setwd("~charliedougherty")
 
-files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/sentinel/20250218", pattern = ".tif", full.names = TRUE)
+files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250218", pattern = ".tif", full.names = TRUE)
 
-setwd("~/Google Drive/My Drive/EarthEngine/sentinel/20250218")
+setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250218")
 
 # Predefine output tibble
 output <- tibble(
@@ -28,7 +28,7 @@ points_df <- data.frame(
 # Convert to sf object and buffer
 points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
 # Buffer after ensuring the correct CRS
-buffered_points_sf <- st_buffer(points_sf, dist = 900)
+buffered_points_sf <- st_buffer(points_sf, dist = 450)
 
 # Convert `sf` buffer object to `Spatial` before using extract()
 buffered_points_sp <- as(buffered_points_sf, "Spatial")  
@@ -63,11 +63,12 @@ output_to_save <- output |>
   pivot_longer(cols = c(`East Lake Bonney`, `Lake Hoare`, `Lake Fryxell`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |> 
   mutate(date = ymd(date))
 
-write_csv(output_to_save, "data/sediment abundance data/SENTINEL_sediment_abundances_20250218.csv")
+write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250218.csv")
 
 # Plot results
 ggplot(output_to_save, aes(date, sediment)) + 
-  geom_path() + 
+  geom_point() + 
   facet_wrap(vars(lake)) + 
-  ggtitle("Sentinel") + 
+  ggtitle("Landsat") + 
   theme_minimal()
+

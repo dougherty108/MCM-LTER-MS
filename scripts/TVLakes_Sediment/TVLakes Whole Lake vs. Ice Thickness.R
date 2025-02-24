@@ -6,19 +6,20 @@ library(broom)
 library(ggpubr)
 
 #set working directory
-setwd("~/Documents/R-Repositories/MCM-LTER")
+setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 #load file
-sed <- read_csv("data/sediment abundance data/sediment_abundances_20250207.csv") |> 
+sedi <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250218.csv") |> 
   mutate(date = ymd(date), 
          mean_coverage = sediment*100, 
          year = year(date), 
          month = month(date))
 
-sed$lake[sed$lake== "fryxell"] = "Lake Fryxell"
-sed$lake[sed$lake== "hoare"] = "Lake Hoare"
-sed$lake[sed$lake== "eastlobe"] = "East Lake Bonney"
-sed$lake[sed$lake== "westlobe"] = "West Lake Bonney"
+#un-comment this out if using a file with the old lake naming
+#sed$lake[sed$lake== "fryxell"] = "Lake Fryxell"
+#sed$lake[sed$lake== "hoare"] = "Lake Hoare"
+#sed$lake[sed$lake== "eastlobe"] = "East Lake Bonney"
+#sed$lake[sed$lake== "westlobe"] = "West Lake Bonney"
 
 
 ## test to fix the seasons issue
@@ -46,6 +47,15 @@ get_season <- function(date) {
     return(paste0("Summer ", year))  # October is Fall
   }
 }
+
+#plot sediment abundances
+ggplot(sedi, aes(date, mean_coverage)) + 
+  geom_point() + 
+  facet_wrap(vars(lake)) + 
+  theme_linedraw()
+
+ggsave("plots/manuscript_plots/wholelakesed.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
+
 
 # Apply the function and group by season
 alllakes <- sed |> 
