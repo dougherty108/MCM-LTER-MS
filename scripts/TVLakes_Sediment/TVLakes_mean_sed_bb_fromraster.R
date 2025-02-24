@@ -1,17 +1,13 @@
+## libraries
 library(raster)
 library(sf)
-library(dplyr)
-library(tibble)
-library(stringr)
-library(lubridate)
-library(tidyr)
-library(ggplot2)
+library(tidyverse)
 
 setwd("~charliedougherty")
 
-files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250218", pattern = ".tif", full.names = TRUE)
+files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/sentinel/20250218", pattern = ".tif", full.names = TRUE)
 
-setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250218")
+setwd("~/Google Drive/My Drive/EarthEngine/sentinel/20250218")
 
 # Predefine output tibble
 output <- tibble(
@@ -67,7 +63,7 @@ output_to_save <- output |>
   pivot_longer(cols = c(`East Lake Bonney`, `Lake Hoare`, `Lake Fryxell`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |> 
   mutate(date = ymd(date))
 
-write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250218.csv")
+write_csv(output_to_save, "data/sediment abundance data/SENTINEL_sediment_abundances_20250218.csv")
 
 # Plot results
 ggplot(output_to_save, aes(date, sediment)) + 
