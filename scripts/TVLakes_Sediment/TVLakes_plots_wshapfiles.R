@@ -9,7 +9,7 @@ library(MetBrewer)
 
 setwd("~charliedougherty")
 
-raster_file = raster("Google Drive/My Drive/EarthEngine/landsat/20250218/LANDSAT_unmix_feb18_2016-11-02.tif")
+raster_file = raster("Google Drive/My Drive/EarthEngine/SENTINEL_unmix_feb25_2016-11-03.tif")
 
 ### load polygons ##
 lk_east_shp <- read_sf("Documents/R-Repositories/MCM-LTER/data/shapefiles/East Lake Bonney.kml") |> 
@@ -54,8 +54,8 @@ for(i in 1:length(files)) {
     drop_na()
   colnames(raster_df)[3] <- "value"
   #uncomment out if you need to filter out above 0 values. 
-  #raster_df = raster_df |> 
-    #mutate(value = (1-value)) |> 
+  raster_df = raster_df |> 
+    mutate(value = (1-value)) #|> 
     #filter(value < 1.05)
   
   year <- str_extract(files[[i]], "20[:digit:][:digit:]-[:digit:][:digit:]-[:digit:][:digit:]")
@@ -72,7 +72,7 @@ for(i in 1:length(files)) {
       labs(title = paste0(year), x = "Northing", y = "Easting") +
       theme_minimal()
   
-  setwd("~/Documents/R-Repositories/MCM-LTER/plots/GEE/SENTINEL/20250218")
+  setwd("~/Documents/R-Repositories/MCM-LTER-MS/plots/SENTINEL/20250225")
   ggsave(filename = paste0("SENTINEL_plot_", year, ".png"))
   print(paste0("you are on plot #",i))
 }

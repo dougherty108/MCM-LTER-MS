@@ -70,5 +70,4 @@ ggplot(output_to_save, aes(date, sediment)) +
   geom_point() + 
   facet_wrap(vars(lake)) + 
   ggtitle("Landsat (unmixing without Panchromatic band)") + 
-  theme_minimal()
-
+  theme_m
