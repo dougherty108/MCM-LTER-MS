@@ -8,14 +8,15 @@ library(MetBrewer)
 
 
 # load sediment file
+setwd("~/Documents/R-Repositories/MCM-LTER-MS/")
 
-sed = read_csv("data/sediment abundance data/sediment_abundances_20250207.csv") |> 
+sed = read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250218.csv") |> 
   mutate(date = ymd(date))
 
-sed$lake[sed$lake== "fryxell"] = "Lake Fryxell"
-sed$lake[sed$lake== "hoare"] = "Lake Hoare"
-sed$lake[sed$lake== "eastlobe"] = "East Lake Bonney"
-sed$lake[sed$lake== "westlobe"] = "West Lake Bonney"
+#sed$lake[sed$lake== "fryxell"] = "Lake Fryxell"
+#sed$lake[sed$lake== "hoare"] = "Lake Hoare"
+#sed$lake[sed$lake== "eastlobe"] = "East Lake Bonney"
+#sed$lake[sed$lake== "westlobe"] = "West Lake Bonney"
 
 # load UW PAR File (s)
 LFBB <- read_csv("data/Blue Box/LIMNO_BLUE_BOX_FRYXELL.csv") |> 
@@ -83,7 +84,10 @@ BB_sed = sed |>
 # do some data viz
 ggplot(BB_sed, aes(sediment, log_PAR)) + 
   geom_point() + 
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm") + 
+  facet_wrap(vars(lake), scales = "free_x") + 
+  ggtitle("UW PAR vs. Sed Abundance") + 
+  theme_minimal()
 
 # linear regression
 PAR_to_sediment = lm(sediment ~ log_PAR, BB_sed)

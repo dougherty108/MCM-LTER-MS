@@ -9,7 +9,7 @@ library(ggpubr)
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 #load file
-sedi <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250218.csv") |> 
+sedi <- read_csv("data/sediment abundance data/SENTINEL_sediment_abundances_20250217.csv") |> 
   mutate(date = ymd(date), 
          mean_coverage = sediment*100, 
          year = year(date), 
@@ -52,14 +52,17 @@ get_season <- function(date) {
 ggplot(sedi, aes(date, mean_coverage)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
-  theme_linedraw()
+  theme_linedraw() + 
+  ggtitle("SENTINEL")
 
 ggsave("plots/manuscript_plots/wholelakesed.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
 
 
 # Apply the function and group by season
-alllakes <- sed |> 
-  mutate(season = sapply(date, get_season))
+alllakes <- sedi |> 
+  mutate(season = sapply(date, get_season), 
+         year = year(date), 
+         month = month(date))
 
 ## load lake ice: 
 lakeice <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv") |> 
@@ -73,12 +76,12 @@ lakeice <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv")
 li_summary = lakeice |> 
   group_by(year, month, lake) |> 
   summarize(mean_thickness = mean(z_water_m, na.rm = T)) |> 
-  print()
+  filter(year > 2014)
 
 ## sediment
 sed <- alllakes |> 
   group_by(year, month, lake) |> 
-  summarize(mean_sed = mean(mean_coverage)) |> 
+  summarize(mean_sed = mean(sediment, na.rm = T)) |> 
   print()
 
 fulljoined = full_join(sed, li_summary) |> 
@@ -89,13 +92,31 @@ plot1 = ggplot(fulljoined, aes(mean_sed, mean_thickness)) +
   geom_smooth(method = "lm") + 
   geom_point() + 
   facet_wrap(vars(lake), scales = "free") + 
-  theme_bw() +
   ggtitle("October-February", 
-          subtitle = "whole lake average")
+          subtitle = "whole lake average") + 
+  theme_linedraw()
 
 ### now remove November and October Values
 fulljoin_filter <- fulljoined |> 
   filter(month == 12 | month == 1 | month == 2)
 
 plot2 = ggplot(fulljoin_filter, aes(mean_sed, mean_thickness)) + 
-  geom_smooth(method = "
+  geom_smooth(method = "lm") + 
+  geom_point() + 
+  facet_wrap(vars(lake), scales = "free") + 
+  ggtitle("December - February",
+          subtitle = "whole lake average") + 
+  theme_linedraw()
+
+ggarrange(plot1, plot2)
+
+ggsave("plots/GEE/alllakes/analysis plots/wholelakesed_vsthickness.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
+
+
+
+
+
+
+
+
+
