@@ -41,9 +41,15 @@ comp <- ice_thick |>
   left_join(modeled_daily, by = join_by(date_time))
 
 #plot modeled and measured against each other
-ggplot(comp, aes(modeled_thickness, mean_thickness)) + 
+ggplot(comp, aes(mean_thickness, modeled_thickness)) + 
   geom_point() + 
-  geom_abline()
+  geom_abline() + 
+  xlab("Measured Ice Thickness") + ylab("Modeled Ice Thickness") + 
+  theme_bw(base_size = 15)
+
+ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
+       width = 8, height = 6, dpi = 700)
+
 
 thickness_pivot <- comp |> 
   pivot_longer(cols = c(modeled_thickness, mean_thickness), 

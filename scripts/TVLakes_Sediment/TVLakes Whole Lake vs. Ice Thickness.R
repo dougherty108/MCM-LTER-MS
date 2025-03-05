@@ -9,7 +9,7 @@ library(ggpubr)
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 #load file
-sedi <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250301.csv") |> 
+sedi <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_600m_20250301.csv") |> 
   mutate(date = ymd(date), 
          mean_coverage = sediment_abundance*100, 
          year = year(date), 
@@ -52,8 +52,10 @@ get_season <- function(date) {
 ggplot(sedi, aes(date, mean_coverage)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
-  theme_linedraw() + 
-  ggtitle("LANDSAT")
+  theme_linedraw(base_size = 15) + 
+  ggtitle("Sediment Estimate", 
+          subtitle = "Landsat") + 
+  xlab("Date") + ylab("Percent Coverage (%)")
 
 ggsave("plots/manuscript_plots/wholelakesed.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
 
@@ -71,7 +73,17 @@ lakeice <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv")
          year = year(date_time),
          year = as.numeric(year),
          z_water_m = z_water_m*-1) |> 
-  filter(lake == "Lake Fryxell" | lake == "Lake Hoare" | lake == "East Lake Bonney" | lake == "West Lake Bonney")
+  filter(lake == "Lake Fryxell" | lake == "Lake Hoare" | lake == "East Lake Bonney" | lake == "West Lake Bonney") |> 
+  filter(year >= 2016)
+
+ggplot(lakeice, aes(date_time, z_water_m)) + 
+  geom_point() + 
+  geom_smooth(se = F) + 
+  facet_wrap(vars(lake)) + 
+  theme_linedraw(base_size = 15) + 
+  xlab("Date") + ylab("Percent Coverage (%)") + 
+  ggtitle("Ice thickness (m) 2016-2023", 
+          subtitle = "ice to water measurement")
 
 li_summary = lakeice |> 
   group_by(year, month, lake) |> 
@@ -98,13 +110,13 @@ plot1 = ggplot(fulljoined, aes(mean_sed, mean_thickness)) +
 
 ### now remove November and October Values
 fulljoin_filter <- fulljoined |> 
-  filter(month == 12 | month == 1 | month == 2)
+  filter(month == 12 | month == 1)
 
 plot2 = ggplot(fulljoin_filter, aes(mean_sed, mean_thickness)) + 
   geom_smooth(method = "lm") + 
   geom_point() + 
   facet_wrap(vars(lake), scales = "free") + 
-  ggtitle("December - February",
+  ggtitle("December - January",
           subtitle = "whole lake average") + 
   theme_linedraw()
 

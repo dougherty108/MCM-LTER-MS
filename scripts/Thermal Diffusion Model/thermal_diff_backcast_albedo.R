@@ -1,13 +1,9 @@
+###### attempt to backcast Albedo
+
 ###### thermal diffusion model ########
 
 ### Authors
 # Charlie Dougherty
-
-# goal of this script is to create clean, gap filled data to be passed through the thermal diffusion model
-# the data should be cleaned and without gaps for the period covering 2016-2025. This is the time 
-# span where there is landsat images for the albedo measurements
-# Also, there is finally met data through 2024 on the website, so need to update the workflow with 
-# the new files, since the structure of these files also changes
 
 # Load necessary libraries
 library(tidyverse)
@@ -22,11 +18,10 @@ setwd("~charliedougherty")
 BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_boym_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
   filter(date_time > '2016-12-21 00:00:00')
-  
+
 HOEM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_hoem_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
-  filter(date_time > '2016-12-21 00:00:00') |> 
-  mutate(airtemp_3m_K = airtemp_3m_degc + 273.15)
+  filter(date_time > '2016-12-21 00:00:00')
 
 COHM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_cohm_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
@@ -34,8 +29,7 @@ COHM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
 
 TARM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_tarm_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
-  filter(date_time > '2016-12-21 00:00:00') |> 
-  mutate(airtemp_3m_K = airtemp_3m_degc + 273.15)
+  filter(date_time > '2016-12-21 00:00:00')
 
 ###################### Define Parameters ######################
 L_initial <- 3.88       # Initial ice thickness (m) Ice thickness at 12/17/2015 ice to ice
@@ -77,10 +71,8 @@ setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 orig_air_temperature <- BOYM |> 
   mutate(airtemp_3m_degc = ifelse(is.na(airtemp_3m_degc), HOEM$airtemp_3m_degc, airtemp_3m_degc)) |> 
   mutate(airtemp_3m_K = airtemp_3m_degc + 273.15) |> 
-    select(metlocid, date_time, airtemp_3m_K) 
+  select(metlocid, date_time, airtemp_3m_K) 
 
-#ggplot(orig_air_temperature, aes(date_time, airtemp_3m_K)) + 
-#  geom_line()
 
 # Define the start time based on the input data
 start_time <- min(orig_air_temperature$date_time)
@@ -93,11 +85,6 @@ air_temperature <- read_csv("data/thermal diffusion model data/ice surface temp/
   mutate(date_time = mdy_hm(date_time), 
          airtemp_3m_K = surface_temp_C + 273.15)
 
-ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-  geom_path()
-
-#ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-#  geom_line()
 
 # Define the full sequence of timestamps at 15-minute intervals
 full_timestamps <- data.frame(date_time = seq(from = min(air_temperature$date_time), 
@@ -109,13 +96,8 @@ air_temp_gaps <- full_timestamps |>
   left_join(air_temperature, by = "date_time")
 
 air_temperature <- air_temp_gaps |> 
-  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), TARM$airtemp_3m_K, airtemp_3m_K))
+  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), orig_air_temperature$airtemp_3m_K, airtemp_3m_K))
 
-ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-  geom_path()
-
-#ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-#  geom_line()
 
 # select incoming shortwave radiation data from Lake Bonney Met and fill gaps
 # this shortwave object has gaps in the data. Fill the gaps with computed values
@@ -141,40 +123,31 @@ shortwave_radiation <- shortwave_radiation_initial |>
 
 
 ############### OUTGOING (UPWELLING) LONGWAVE RADIATION
-# select outgoing longwave radiation data from  Bonney Lake Glacier Met 
+# select outgoing longwave radiation data from Commonwealth Glacier Met 
 outgoing_longwave_radiation_initial <- COHM |> 
   select(metlocid, date_time, lwradout2_wm2)
 
+
 # tried the ice surface temperature product, but the fit was way worse
-#artificial_longwave_out <- BOYM |> 
-#  mutate(airtemp_1m_degc = ifelse(is.na(airtemp_1m_degc), HOEM$airtemp_1m_degc, airtemp_1m_degc)) |> 
-#  mutate(surftemp_K = (airtemp_1m_degc + 273.15)) |> 
-#  select(date_time, surftemp_K) |> 
-#  #mutate(surftemp_K = if_else(date_time > "2023-01-05 01:45:00", surftemp_K * 1.03, surftemp_K)) |> 
-#  mutate(lwout = (epsilon*sigma*(surftemp_K^4)))
+artificial_longwave_out <- BOYM |> 
+  mutate(airtemp_1m_degc = ifelse(is.na(airtemp_1m_degc), HOEM$airtemp_1m_degc, airtemp_1m_degc)) |> 
+  mutate(surftemp_K = (airtemp_1m_degc + 273.15)) |> 
+  select(date_time, surftemp_K) |> 
+  #mutate(surftemp_K = if_else(date_time > "2023-01-05 01:45:00", surftemp_K * 1.03, surftemp_K)) |> 
+  mutate(lwout = (epsilon*sigma*(surftemp_K^4)))
 
-artificial_longwave_out <- air_temperature |> 
-  select(date_time, airtemp_3m_K) |> 
-  mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.95)
-
-ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
-  geom_path()
-
-#artificial_longwave_out <- BOYM |> 
-#  mutate(airtemp_1m_degc = ifelse(is.na(airtemp_1m_degc), HOEM$airtemp_1m_degc, airtemp_1m_degc)) |> # fill holes in 1m temp with HOEM data
-#  mutate(surftemp_K = (airtemp_1m_degc + 273.15)) |> 
-##  select(date_time, surftemp_K) |> 
-#  #mutate(surftemp_K = if_else(date_time > "2023-01-05 01:45:00", surftemp_K, surftemp_K), ) |> 
-#  mutate(lwout = (epsilon*sigma*(surftemp_K^4)))
+artificial_longwave_out <- BOYM |> 
+  mutate(airtemp_1m_degc = ifelse(is.na(airtemp_1m_degc), HOEM$airtemp_1m_degc, airtemp_1m_degc)) |> # fill holes in 1m temp with HOEM data
+  mutate(surftemp_K = (airtemp_1m_degc + 273.15)) |> 
+  select(date_time, surftemp_K) |> 
+  #mutate(surftemp_K = if_else(date_time > "2023-01-05 01:45:00", surftemp_K, surftemp_K), ) |> 
+  mutate(lwout = (epsilon*sigma*(surftemp_K^4)))
 
 #join datasets together to fill holes
 outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |> 
   left_join(artificial_longwave_out, by = "date_time") |>    # Join on date_time
   mutate(lwradout2_wm2 = ifelse(is.na(lwradout2_wm2), lwout, lwradout2_wm2)) |>   # Fill missing values
   select(-lwout)  
-
-ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) + 
-  geom_line()
 
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
@@ -204,7 +177,7 @@ daily_timestamps <- seq.Date(from = as.Date(min(artificial_lw_in$date_time)),
                              by = "day")
 
 # Generate random cloud cover values (one per day)
-daily_cloud_cover <- runif(length(daily_timestamps), min = 0.00, max = 1.00)
+daily_cloud_cover <- runif(length(daily_timestamps), min = 0.00, max = 0.75)
 
 # Create a cloud cover dataframe
 cloud_cover_df <- data.frame(date = daily_timestamps, cloud_cover = daily_cloud_cover)
@@ -216,18 +189,11 @@ artificial_longwave_in <- artificial_lw_in |>
   select(-date) |> # Remove the helper date column
   mutate(lwin = (0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)
 
-# incoming longwave looks pretty good (downwelling)
-ggplot(artificial_longwave_in, aes(date_time, lwin)) + 
-  geom_line()
-
 #join to fill gaps
 incoming_longwave_radiation <- incoming_longwave_radiation_initial |> 
   left_join(artificial_longwave_in, by = "date_time") |>    # Join on date_time
   mutate(lwradin2_wm2 = ifelse(is.na(lwradin2_wm2), lwin, lwradin2_wm2)) |>   # Fill missing values
   select(-lwin)   # Remove extra column 
-
-#ggplot(incoming_longwave_radiation, aes(date_time, lwradin2_wm2)) + 
-#  geom_line()
 
 # select air pressure data from Lake Hoare Met
 air_pressure = HOEM |> 
@@ -255,8 +221,8 @@ albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundance
          month = month(date), 
          year = year(date)) |> 
   drop_na(sediment) #|> 
-  #group_by(year, month) |> 
-  #summarize(albedo_mean = (mean(sediment, na.rm = TRUE)))
+#group_by(year, month) |> 
+#summarize(albedo_mean = (mean(sediment, na.rm = TRUE)))
 
 # Set the date as the first day of each month
 albedo_orig$date <- as.Date(paste(albedo_orig$year, albedo_orig$month, "01", sep = "-"))
@@ -281,9 +247,6 @@ albedo1 <- albedo1 |>
   arrange(time) |> 
   fill(ice_abundance, .direction = "down")
 
-#plot albedo
-#ggplot(albedo1, aes(time, albedo_mean)) + 
-#  geom_line()
 
 # load relative humidity data
 relative_humidity <- BOYM |> 
@@ -370,8 +333,6 @@ if (length(airt_interp) != length(time_model) |
   stop("Length of interpolated data does not match the model time steps!")
 }
 
-#alb_altered = 0.1402 + ((albedo_interp)*0.95)
-
 ###################### Create the time series tibble for model time ######################
 time_series <- tibble(
   time = time_model,                        # Model time steps
@@ -379,7 +340,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 0.1402 + ((albedo_interp)*0.750),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = 0.1402 + ((albedo_interp)*0.7200),  # albedo, unitless (lower albedo value from measured BOYM data)
   #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
   #albedo = albedo_interp,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
@@ -393,16 +354,7 @@ time_series <- tibble(
 series <- time_series |> 
   pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind, delta_T), 
                names_to = "variable", values_to = "data")
-  
-#ggplot(series, aes(time, data)) + 
-#  geom_line() + 
-#  xlab("Date") + ylab("Value") +
-#  facet_wrap(vars(variable), scales = "free") + 
-#  theme_minimal()
 
-###NOTES: The longwave estimations are still a mess. The SW gap fills looks pretty good to me, although there's 
-# pretty bad fit in 2023-2024. 
-# Model output goes to crap when the Longwave data estimates start. Need to sort that out
 
 ############### MODEL BEGINS ###########
 
@@ -433,156 +385,94 @@ pb <- progress_bar$new(
 )
 
 
-###################### Simulation loop ######################
-for (t_idx in 1:nrow(time_series)) {
+
+# Function to simulate ice thickness given an albedo value
+simulate_thickness <- function(albedo_guess, other_inputs) {
+  # Extract relevant environmental inputs
+  T_air <- other_inputs$T_air
+  SW_in <- other_inputs$SW_in
+  LWR_in <- other_inputs$LWR_in
+  LWR_out <- other_inputs$LWR_out
+  press <- other_inputs$pressure
+  wind <- other_inputs$wind
+  delta_T <- other_inputs$delta_T
+  rh <- other_inputs$relative_humidity
+  prevL <- other_inputs$prevL  # Previous ice thickness
+  prevT <- other_inputs$prevT  # Previous temperature profile
   
-  #store results for time step
-  results$time[t_idx] <- time_series$time[t_idx]
-  results$depth[t_idx] <- depth
-  results$temperature[t_idx] <- prevT
-  results$thickness[t_idx] <- prevL
-  results$Iteration[t_idx] <- t_idx  
+  # Compute absorbed shortwave radiation
+  SW_abs <- SW_in * (1 - albedo_guess)
   
-  #ice thickness
-  newL = prevL # Copy current thickness
-  newT <- prevT  # Copy the current temperature profile
-  
-  # Extract current air temperature, shortwave radiation, longwave radiation, and time step
-  T_air <- time_series$T_air[t_idx]
-  SW_in <- time_series$SW_in[t_idx]
-  LWR_in <- time_series$LWR_in[t_idx]
-  LWR_out <- time_series$LWR_out[t_idx]
-  albedo <- (time_series$albedo[t_idx])
-  press <- (time_series$pressure[t_idx])
-  wind <- (time_series$wind[t_idx])
-  delta_T <- (time_series$delta_T[t_idx])
-  rh <- (time_series$relative_humidity[t_idx])
-  
-  # Update temperature profile using the 1D heat diffusion equation
-  for (i in 2:length(prevT)) {
-    newT[i] <- prevT[i] + alpha * (dt * 86400) / dx^2 * (prevT[i + 1] - 2 * prevT[i] + prevT[i - 1])
-    #print(newT)
-  }
-  
-  # Apply boundary conditions
-  newT[1] <- T_air  # Surface temperature equals air temperature
-  newT[length(prevT)] <- 273.15  # Bottom temperature equals freezing point of water
-  
-  # Calculate absorbed shortwave radiation (with albedo)
-  SW_abs <- SW_in * (1 - albedo)
-  
-  # Net longwave radiation (incoming - outgoing)
+  # Compute net longwave radiation
   LW_net <- (LWR_in - LWR_out)
   
-  #calculate sensible heat flux
-  rho_air = (press*Ma)*0.1 / (R*T_air)
+  # Compute sensible and latent heat fluxes
+  rho_air <- (press * Ma) * 0.1 / (R * T_air)
+  Qh <- rho_air * Ca * Ch * delta_T * wind
   
-  #sensible heat flux
-  Qh = rho_air*(Ca)*Ch*(delta_T)*wind
+  if (prevT[1] >= Tf) {
+    A <- 6.1121
+    B <- 17.502
+    C <- 240.97
+    xLatent <- xLv
+  } else {
+    A <- 6.1115
+    B <- 22.452
+    C <- 272.55
+    xLatent <- xLs
+  }
   
-  #latent heat flux
-  #Don't know how to find delta_Q: relative humidity difference between air and ice surface
-  # currently, the below code is creating massive flux values, which is wrong. 
+  ea <- ((rh/100) * A * exp((B * (T_air - Tf)) / (C + (T_air - Tf)))) / 100
+  es0 <- (A * exp((B * (Tf - Tf)) / (C + (Tf - Tf)))) / 100
+  Ql <- rho_air * xLatent * Ce * (0.622 / press) * (ea - es0) * wind
   
-  if (newT[1] >= Tf) {
-    A = 6.1121
-    B = 17.502
-    C = 240.97
-    
-    # energy to evaporate water
-    xLatent = xLv
-    
-    #Compute atmospheric vapor pressure from relative humidity data (output is in hPa?)
-    ea = ((rh/100)* A * exp((B * (T_air - Tf))/(C + (T_air - Tf))))/100
-    
-    # compute the density of air slightly conflicts with what we have above
-    rho_air = press * Ma/(R * T_air) * (1 + (epsilon - 1) * (ea/press))
-    
-    # Water vapor pressure at the surface assuming surface is the 
-    # below freezing
-    es0 = (A * exp((B * (Tf - Tf))/(C + (Tf - Tf))))/100
-    
-    Ql = rho_air*(xLatent)*Ce*(0.622/press)*(ea - es0)*wind
-    }
+  # Compute surface flux
+  surface_flux <- SW_abs + (LW_net - (k * (prevT[1] - T_air) / dx)) + Qh + Ql
   
-  if (newT[1] < Tf) {
-      A = 6.1115
-      B = 22.452
-      C = 272.55
-      xLatent = xLs # Energy to sublimate ice
-      
-      # Compute atmospheric vapor pressure from relative humidity data
-      ea = ((rh/100) * A * exp((B * (T_air - Tf))/(C + (T_air - Tf)))) / 100
-      
-      #rho_air = press * Ma/(R * T_air) * (1 + (epsilon - 1) * (ea/press))
-      
-      # Compute the water vapor pressure at the surface assuming surface
-      # is same temp as air
-      es0 = (A * exp((B * (T_air - Tf))/(C + (T_air - Tf)))) / 100
-      
-      Ql = rho_air*(xLatent)*Ce*(0.622/press)*(ea - es0)*wind
-      }
-  
-  # Surface heat flux (absorbed shortwave, net longwave, conductive heat flux, sensible heat flux, and latent heat flux)
-  surface_flux <- SW_abs + (LW_net - (k * (prevT[1] - T_air) / dx)) + Qh + Ql  # Adjust conductive term
-  # Calculate melting at the surface (and ablation)
+  # Compute new ice thickness
+  newL <- prevL
   if (!is.na(surface_flux) && surface_flux > 0) {
     dL_surface <- surface_flux * (dt * 86400) / (rho * L_f)
     newL <- newL - dL_surface
   }
   
-  # Calculate freezing/melting at the bottom
-  if (!is.na(newL) && newL > 0) {
-    Q_bottom <- -k * (newT[length(newT) - 1] - newT[length(newT)]) / dx
-    dL_bottom <- Q_bottom * (dt * 86400) / (rho * L_f)
-    newL <- newL + dL_bottom
-  }
-  
-  dL_surface.vec[t_idx] = dL_surface
-  dL_bottom.vec[t_idx] = dL_bottom
-  
-  # Ensure ice thickness remains positive
-  newL <- max(0, newL)
-  
-  # Adjust spatial resolution if thickness changes
-  if (newL > 0) {
-    # nx <- 30  # Ensure at least 15 layers
-    dx <- 0.1  # Recalculate spatial step size
-    newdepth <- seq(0, newL, by = dx)  # Update depth values
-    newT <- approx(seq(0, prevL, length.out = length(depth)), newT, seq(0, newL, length.out = length(newdepth)), rule = 2)$y  # Interpolate
-  } else {
-    newT <- rep(0, nx)  # Reset temperature profile if no ice
-    depth <- NA  # No depth when no ice
-  }
-  
-  # Update prevT
-  prevT <- newT
-  prevL = newL
-  depth = newdepth
-  
-  pb$tick()
+  return(max(0, newL))  # Ensure non-negative ice thickness
 }
 
-###################### plotting of results ######################
-results |> 
-  group_by(time) |> 
-  summarize(thickness = max(thickness)) |> 
-  ggplot(aes(x = time, y = thickness)) +
-  geom_line(color = "red", size = 1) +
-  labs(x = "Time", y = "Ice Thickness (m)",
-       title = "") +
-  geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
-  theme_bw(base_size = 15)
+# Objective function to minimize (error between modeled and observed thickness)
+error_function <- function(albedo_guess, observed_thickness, other_inputs) {
+  simulated_thickness <- simulate_thickness(albedo_guess, other_inputs)
+  return(abs(simulated_thickness - observed_thickness))  # Minimize absolute error
+}
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_modeled.png", width = 9, height = 6, dpi = 700)
+# Function to find optimal albedo for a given ice thickness observation
+backcast_albedo <- function(observed_thickness, other_inputs) {
+  result <- optim(
+    par = 0.5,  # Initial albedo guess
+    fn = error_function,
+    observed_thickness = observed_thickness,
+    other_inputs = other_inputs,
+    method = "Brent",
+    lower = 0.1,  # Albedo typically ranges from 0.1 to 0.9
+    upper = 0.9
+  )
+  return(result$par)  # Return estimated albedo
+}
 
-#troubleshooting plots, to find distance of change at top and bottom
-plot(dL_bottom.vec)
-plot(dL_surface.vec)
+# Example usage:
+observed_thickness <- 0.5  # Example observed ice thickness
+other_inputs <- list(
+  T_air = -10,
+  SW_in = 200,
+  LWR_in = 300,
+  LWR_out = 250,
+  pressure = 1013,
+  wind = 3,
+  delta_T = 5,
+  relative_humidity = 80,
+  prevL = 0.6,
+  prevT = rep(273.15, 10)  # Example temperature profile
+)
 
-# Plot of input ice data
-ggplot(series, aes(time, data)) + 
-  geom_line() + 
-  xlab("Date") + ylab("Value") +
-  facet_wrap(vars(variable), scales = "free") + 
-  th
+estimated_albedo <- backcast_albedo(observed_thickness, other_inputs)
+print(paste("Estimated albedo:", estimated_albedo))
