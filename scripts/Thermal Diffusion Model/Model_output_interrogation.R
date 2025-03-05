@@ -22,7 +22,7 @@ ice_thick <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv
 
 # plot modeled ice thickness against the measured thickness
 ggplot() + 
-  geom_line(data = GEE_corrected, aes(x = time, y = thickness)) + 
+  geom_line(data = GEE_corrected, aes(x = time, y = thickness), linewidth = 1.50) + 
   geom_point(data = ice_thick, aes(x = date_time, y = mean_thickness), color = "red") +
   xlab("Time") + ylab("Ice Thickness (m)") + 
   theme_minimal()
