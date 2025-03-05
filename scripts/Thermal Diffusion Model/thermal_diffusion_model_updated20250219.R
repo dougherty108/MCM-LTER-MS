@@ -93,7 +93,14 @@ air_temperature <- read_csv("data/thermal diffusion model data/ice surface temp/
   mutate(date_time = mdy_hm(date_time), 
          airtemp_3m_K = surface_temp_C + 273.15)
 
+wlbbb_airtemp <- read_csv('data/thermal diffusion model data/ice surface temp/air_temp_WLBBB.csv') |> 
+  mutate(date_time = mdy_hm(date_time), 
+         airtemp_3m_K = surface_temp_C + 273.15)
+
 ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
+  geom_path()
+
+ggplot(wlbbb_airtemp, aes(date_time, airtemp_3m_K)) + 
   geom_path()
 
 #ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
@@ -109,7 +116,7 @@ air_temp_gaps <- full_timestamps |>
   left_join(air_temperature, by = "date_time")
 
 air_temperature <- air_temp_gaps |> 
-  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), TARM$airtemp_3m_K, airtemp_3m_K))
+  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), wlbbb_airtemp$airtemp_3m_K, airtemp_3m_K))
 
 ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
   geom_path()
@@ -155,7 +162,7 @@ outgoing_longwave_radiation_initial <- COHM |>
 
 artificial_longwave_out <- air_temperature |> 
   select(date_time, airtemp_3m_K) |> 
-  mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.95)
+  mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.92)
 
 ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
   geom_path()
@@ -178,7 +185,7 @@ ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) +
 
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
-incoming_longwave_radiation_initial <- BOYM |> 
+incoming_longwave_radiation_initial <- COHM |> 
   select(metlocid, date_time, lwradin2_wm2)
 
 # Determine the last timestamp
@@ -282,8 +289,8 @@ albedo1 <- albedo1 |>
   fill(ice_abundance, .direction = "down")
 
 #plot albedo
-#ggplot(albedo1, aes(time, albedo_mean)) + 
-#  geom_line()
+ggplot(albedo1, aes(time, ice_abundance)) + 
+  geom_line()
 
 # load relative humidity data
 relative_humidity <- BOYM |> 
@@ -379,7 +386,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 0.1402 + ((albedo_interp)*0.750),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = 0.1402 + ((albedo_interp)*0.6775),  # albedo, unitless (lower albedo value from measured BOYM data)
   #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
   #albedo = albedo_interp,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
@@ -395,7 +402,7 @@ series <- time_series |>
                names_to = "variable", values_to = "data")
   
 #ggplot(series, aes(time, data)) + 
-#  geom_line() + 
+##  geom_line() + 
 #  xlab("Date") + ylab("Value") +
 #  facet_wrap(vars(variable), scales = "free") + 
 #  theme_minimal()
@@ -585,4 +592,10 @@ ggplot(series, aes(time, data)) +
   geom_line() + 
   xlab("Date") + ylab("Value") +
   facet_wrap(vars(variable), scales = "free") + 
-  th
+  theme_minimal(base_size = 15)
+
+
+# save output to model outputs file, interrogation in different script
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250304.csv")
+
+############## can check the outputs against actual ice thickness in Model_output_interrogation.R
