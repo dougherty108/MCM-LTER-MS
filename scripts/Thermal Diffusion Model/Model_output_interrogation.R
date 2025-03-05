@@ -4,7 +4,7 @@ library(tidyverse)
 setwd("/Users/charliedougherty/Documents/R-Repositories/MCM-LTER-MS")
 
 # load file
-GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250302.csv") |> 
+GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250304.csv") |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   mutate(time = ymd_hms(time)) |> 
@@ -47,9 +47,12 @@ ggplot(comp, aes(mean_thickness, modeled_thickness)) +
   xlab("Measured Ice Thickness") + ylab("Modeled Ice Thickness") + 
   theme_bw(base_size = 15)
 
-ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
-       width = 8, height = 6, dpi = 700)
+#ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
+#       width = 8, height = 6, dpi = 700)
 
+linear_model = lm(modeled_thickness ~mean_thickness, data = comp)
+
+summary(linear_model)
 
 thickness_pivot <- comp |> 
   pivot_longer(cols = c(modeled_thickness, mean_thickness), 
@@ -59,14 +62,6 @@ thickness_pivot <- comp |>
 # plot output to confirm join worked
 #ggplot(thickness_pivot, aes(date_time, thickness, color = measurement_type)) +
 #  geom_()
-
-##### what is the R squared for the entire model
-
-linear_model = lm(modeled_thickness ~mean_thickness, data = comp)
-
-summary(linear_model)
-
-# r_squared for the entire data is -0.04872 VERY BAD
 
 
 # what if you remove data past 2022, when the longwave data gets particularly bad

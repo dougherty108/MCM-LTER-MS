@@ -112,3 +112,23 @@ plot1 = ggplot(fulljoined, aes(mean_sed, mean_thickness)) +
 fulljoin_filter <- fulljoined |> 
   filter(month == 12 | month == 1)
 
+plot2 = ggplot(fulljoin_filter, aes(mean_sed, mean_thickness)) + 
+  geom_smooth(method = "lm") + 
+  geom_point() + 
+  facet_wrap(vars(lake), scales = "free") + 
+  ggtitle("December - January",
+          subtitle = "whole lake average") + 
+  theme_linedraw()
+
+ggarrange(plot1, plot2)
+
+ggsave("plots/GEE/alllakes/analysis plots/wholelakesed_vsthickness.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
+
+
+
+
+
+
+
+
+
