@@ -1,5 +1,4 @@
 #### plotting for RGB images ######
-
 library(terra)
 library(sf)
 library(tidyverse)
