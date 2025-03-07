@@ -5,30 +5,28 @@ library(dplyr)
 
 # Load the list of raster files
 setwd("/Users/charliedougherty")
-files <- list.files(path = "Google Drive/My Drive/EarthEngine/20250208", pattern = ".tif", full.names = TRUE)
-
-setwd("/Users/charliedougherty/")
+files <- list.files(path = "Google Drive/My Drive/EarthEngine/landsat/20250301", pattern = ".tif", full.names = TRUE)
 
 # Load and transform polygons
-lk_east_shp <- read_sf("Documents/R-Repositories/MCM-LTER/data/shapefiles/East Lake Bonney.kml") |> 
+lk_east_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/East Lake Bonney.kml") |> 
   st_cast("POLYGON") |> 
   st_transform(crs = st_crs(raster(files[1]))) |> 
   #select(-Description) |> 
   st_zm()
 
-lk_hoare_shp <- read_sf("Documents/R-Repositories/MCM-LTER/data/shapefiles/Lake Hoare Shapefile.kml") |> 
+lk_hoare_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/Lake Hoare Shapefile.kml") |> 
   st_cast("POLYGON") |> 
   st_transform(crs = st_crs(raster(files[1]))) |> 
   #select(-Description) |> 
   st_zm()
 
-lk_fryxell_shp <- read_sf("Documents/R-Repositories/MCM-LTER/data/shapefiles/Lake Fryxell Shapefile.kml") |> 
+lk_fryxell_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/Lake Fryxell Shapefile.kml") |> 
   st_cast("POLYGON") |> 
   st_transform(crs = st_crs(raster(files[1]))) |> 
   #select(-Description) |> 
   st_zm()
 
-lk_west_shp <- read_sf("Documents/R-Repositories/MCM-LTER/data/shapefiles/West Lake Bonney.kml") |> 
+lk_west_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/West Lake Bonney.kml") |> 
   st_cast("POLYGON") |> 
   st_transform(crs = st_crs(raster(files[1]))) |> 
   #select(-Description) |> 
@@ -36,6 +34,8 @@ lk_west_shp <- read_sf("Documents/R-Repositories/MCM-LTER/data/shapefiles/West L
 
 # Initialize output list
 results <- list(
+  `Lake Hoare` = as.numeric(), 
+  `Lake Fryxell` = 
   mean_fry <- NA,
   mean_hor <- NA,
   mean_eas <- NA,
@@ -164,5 +164,95 @@ ggplot(dates_grouped, aes(date, mean_coverage, color = lake)) +
 ######### write the datafile as an output
 setwd("/Users/charliedougherty/Documents/R-Repositories/MCM-LTER")
 write_csv(dates_grouped, "data/sediment abundance data/sediment_abundance_wholelake_20250211.csv")
+
+
+####### updated version of script using extract function: 
+## libraries
+library(raster)
+library(sf)
+library(tidyverse)
+
+setwd("~charliedougherty")
+
+files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250301", pattern = ".tif", full.names = TRUE)
+
+setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250301")
+
+# Predefine output tibble
+output <- tibble(
+  date = character(),
+  `Lake Fryxell` = numeric(),
+  `Lake Hoare` = numeric(),
+  `East Lake Bonney` = numeric(),
+  `West Lake Bonney` = numeric()
+)
+
+# shapefiles
+setwd("/Users/charliedougherty")
+files <- list.files(path = "Google Drive/My Drive/EarthEngine/landsat/20250301", pattern = ".tif", full.names = TRUE)
+
+# Load and transform polygons
+lk_east_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/East Lake Bonney.kml") |> 
+  st_cast("POLYGON") |> 
+  st_transform(crs = st_crs(raster(files[1]))) |> 
+  #select(-Description) |> 
+  st_zm()
+
+lk_hoare_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/Lake Hoare Shapefile.kml") |> 
+  st_cast("POLYGON") |> 
+  st_transform(crs = st_crs(raster(files[1]))) |> 
+  #select(-Description) |> 
+  st_zm()
+
+lk_fryxell_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/Lake Fryxell Shapefile.kml") |> 
+  st_cast("POLYGON") |> 
+  st_transform(crs = st_crs(raster(files[1]))) |> 
+  #select(-Description) |> 
+  st_zm()
+
+lk_west_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/West Lake Bonney.kml") |> 
+  st_cast("POLYGON") |> 
+  st_transform(crs = st_crs(raster(files[1]))) |> 
+  #select(-Description) |> 
+  st_zm()
+
+
+# Define point coordinates
+points_df <- data.frame(
+  name = c("Lake Fryxell", "Lake Hoare", "East Lake Bonney", "West Lake Bonney"),
+  x = c(391748.223282, 396517.85394052055, 404047.2666197109, 407169.73944380396),
+  y = c(-1293198.163127, -1289740.3825915689, -1277516.4884229063, -1275776.8988470172)
+)
+
+# Convert to sf object and buffer
+points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
+# Buffer after ensuring the correct CRS
+buffered_points_sf <- st_buffer(points_sf, dist = 300)
+
+# Convert `sf` buffer object to `Spatial` before using extract()
+buffered_points_sp <- as(buffered_points_sf, "Spatial")  
+
+setwd("~charliedougherty")
+# Loop through each raster file
+for (i in seq_along(files)) {
+  raster_file <- raster(files[i])
+  
+  # Extract mean values using the corrected object
+  extracted_values <- raster::extract(raster_file, buffered_points_sp, fun = mean, na.rm = TRUE)
+  
+  # Extract date from filename
+  date <- str_extract(files[i], "20\\d{2}-\\d{2}-\\d{2}")
+  
+  # Append results to output tibble
+  output <- bind_rows(output, tibble(
+    date = date, 
+    `Lake Fryxell` = extracted_values[1],
+    `Lake Hoare` = extracted_values[2], 
+    `East Lake Bonney` = extracted_values[3], 
+    `West Lake Bonney` = extracted_values[4]
+  ))
+  
+  print(i)  # Keep track of progress
+}
 
 

@@ -28,7 +28,7 @@ points_df <- data.frame(
 # Convert to sf object and buffer
 points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
 # Buffer after ensuring the correct CRS
-buffered_points_sf <- st_buffer(points_sf, dist = 300)
+buffered_points_sf <- st_buffer(points_sf, dist = 450)
 
 # Convert `sf` buffer object to `Spatial` before using extract()
 buffered_points_sp <- as(buffered_points_sf, "Spatial")  
@@ -64,14 +64,13 @@ output_to_save <- output |>
   drop_na() |> 
   mutate(date = ymd(date), 
          ice_abundance = sediment, 
-         sediment_abundance = 1-sediment,
-         approx_albedo = 0.1422 + (sediment)*0.722) |> 
+         sediment_abundance = 1-sediment) |> 
   drop_na()
 
-write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_600m_2_20250301.csv")
+write_csv(output_to_save, "Documents/R-Repositories/MCM-LTER-MS/data/sediment abundance data/LANDSAT_sediment_abundances_450m_20250301.csv")
 
 # Plot results
-ggplot(output_to_save, aes(date, sediment)) + 
+ggplot(output_to_save, aes(date, sediment_abundance)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
   ggtitle("Landsat") + 
@@ -81,11 +80,5 @@ ggplot(output_to_save, aes(date, ice_abundance)) +
   geom_point() + 
   facet_wrap(vars(lake)) + 
   ggtitle("Landsat") + 
-  theme_minimal()
-
-ggplot(output_to_save, aes(date, approx_albedo)) + 
-  geom_point() + 
-  facet_wrap(vars(lake)) + 
-  ggtitle("Landsat (unmixing without Panchromatic band)") + 
   theme_minimal()
 
