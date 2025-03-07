@@ -67,7 +67,7 @@ li_summary = lakeice |>
 
 ## sediment
 sed_monthly <- sedi |> 
-  group_by(year, month, lake) |> 
+  group_by(year, month, lake, buffer_distance) |> 
   summarize(mean_sed = mean(sediment_abundance, na.rm = T)) |> 
   print()
 
@@ -75,30 +75,42 @@ fulljoined = full_join(sed_monthly, li_summary) |>
   drop_na()
 
 ##### plot
-plot1 = ggplot(fulljoined, aes(mean_sed, mean_thickness)) + 
-  geom_smooth(method = "lm") + 
+ggplot(fulljoined, aes(mean_sed, mean_thickness, color = lake)) + 
+  geom_smooth(method = "lm", se = F) + 
   geom_point() + 
-  facet_wrap(vars(lake), scales = "free") + 
+  facet_wrap(vars(buffer_distance), scales = "free") + 
   ggtitle("October-February", 
           subtitle = "whole lake average") + 
-  theme_linedraw()
+  scale_color_brewer(palette = "Set1") +
+  theme_linedraw() 
 
 ### now remove November and October Values
 fulljoin_filter <- fulljoined |> 
   filter(month == 12 | month == 1)
 
-plot2 = ggplot(fulljoin_filter, aes(mean_sed, mean_thickness)) + 
-  geom_smooth(method = "lm") + 
+ggplot(fulljoin_filter, aes(mean_sed, mean_thickness, color = lake)) + 
+  geom_smooth(method = "lm", se = F) + 
   geom_point() + 
-  facet_wrap(vars(lake), scales = "free") + 
-  ggtitle("December - January",
+  facet_wrap(vars(buffer_distance), scales = "free") + 
+  ggtitle("December-January", 
           subtitle = "whole lake average") + 
-  theme_linedraw()
+  scale_color_brewer(palette = "Set1") +
+  theme_linedraw(base_size = 15) 
 
-ggarrange(plot1, plot2)
+# now filter for only early year estimates, October - December
+oct_dec_fulljoin <- fulljoined |> 
+  filter(month == 10 | month == 11 | month == 12)
 
 ggsave("plots/GEE/alllakes/analysis plots/wholelakesed_vsthickness.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
 
+ggplot(oct_dec_fulljoin, aes(mean_sed, mean_thickness, color = lake)) + 
+  geom_smooth(method = "lm", se = F) + 
+  geom_point() + 
+  facet_wrap(vars(buffer_distance), scales = "free") + 
+  ggtitle("October - December", 
+          subtitle = "whole lake average") + 
+  scale_color_brewer(palette = "Set1") +
+  theme_linedraw(base_size = 15) 
 
 
 
