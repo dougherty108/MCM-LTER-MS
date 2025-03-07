@@ -189,56 +189,42 @@ output <- tibble(
 
 # shapefiles
 setwd("/Users/charliedougherty")
+
+# Load required libraries
+library(sf)
+library(raster)
+library(dplyr)
+library(stringr)
+
 files <- list.files(path = "Google Drive/My Drive/EarthEngine/landsat/20250301", pattern = ".tif", full.names = TRUE)
 
 # Load and transform polygons
-lk_east_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/East Lake Bonney.kml") |> 
-  st_cast("POLYGON") |> 
-  st_transform(crs = st_crs(raster(files[1]))) |> 
-  #select(-Description) |> 
-  st_zm()
-
-lk_hoare_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/Lake Hoare Shapefile.kml") |> 
-  st_cast("POLYGON") |> 
-  st_transform(crs = st_crs(raster(files[1]))) |> 
-  #select(-Description) |> 
-  st_zm()
-
-lk_fryxell_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/Lake Fryxell Shapefile.kml") |> 
-  st_cast("POLYGON") |> 
-  st_transform(crs = st_crs(raster(files[1]))) |> 
-  #select(-Description) |> 
-  st_zm()
-
-lk_west_shp <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/West Lake Bonney.kml") |> 
-  st_cast("POLYGON") |> 
-  st_transform(crs = st_crs(raster(files[1]))) |> 
-  #select(-Description) |> 
-  st_zm()
-
-
-# Define point coordinates
-points_df <- data.frame(
-  name = c("Lake Fryxell", "Lake Hoare", "East Lake Bonney", "West Lake Bonney"),
-  x = c(391748.223282, 396517.85394052055, 404047.2666197109, 407169.73944380396),
-  y = c(-1293198.163127, -1289740.3825915689, -1277516.4884229063, -1275776.8988470172)
+lake_shapefiles <- list(
+  "Lake Fryxell" = "Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/Lake Fryxell Shapefile.kml",
+  "Lake Hoare" = "Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/Lake Hoare Shapefile.kml",
+  "East Lake Bonney" = "Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/East Lake Bonney.kml",
+  "West Lake Bonney" = "Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/West Lake Bonney.kml"
 )
 
-# Convert to sf object and buffer
-points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
-# Buffer after ensuring the correct CRS
-buffered_points_sf <- st_buffer(points_sf, dist = 300)
-
-# Convert `sf` buffer object to `Spatial` before using extract()
-buffered_points_sp <- as(buffered_points_sf, "Spatial")  
+lakes_sf <- lapply(lake_shapefiles, function(shp) {
+  read_sf(shp) |> 
+    st_cast("POLYGON") |> 
+    st_transform(crs = st_crs(raster(files[1]))) |> 
+    st_zm()
+})
 
 setwd("~charliedougherty")
+output <- tibble()
+
 # Loop through each raster file
 for (i in seq_along(files)) {
   raster_file <- raster(files[i])
   
-  # Extract mean values using the corrected object
-  extracted_values <- raster::extract(raster_file, buffered_points_sp, fun = mean, na.rm = TRUE)
+  # Extract mean values within each lake polygon
+  extracted_values <- sapply(lakes_sf, function(lake) {
+    cropped_raster <- mask(crop(raster_file, lake), lake)
+    cellStats(cropped_raster, stat = 'mean', na.rm = TRUE)
+  })
   
   # Extract date from filename
   date <- str_extract(files[i], "20\\d{2}-\\d{2}-\\d{2}")
@@ -246,13 +232,34 @@ for (i in seq_along(files)) {
   # Append results to output tibble
   output <- bind_rows(output, tibble(
     date = date, 
-    `Lake Fryxell` = extracted_values[1],
-    `Lake Hoare` = extracted_values[2], 
-    `East Lake Bonney` = extracted_values[3], 
-    `West Lake Bonney` = extracted_values[4]
+    `Lake Fryxell` = extracted_values["Lake Fryxell"],
+    `Lake Hoare` = extracted_values["Lake Hoare"], 
+    `East Lake Bonney` = extracted_values["East Lake Bonney"], 
+    `West Lake Bonney` = extracted_values["West Lake Bonney"]
   ))
   
   print(i)  # Keep track of progress
 }
 
+output_for_save <- output |> 
+  pivot_longer(cols = c(`East Lake Bonney`, `Lake Hoare`, `Lake Fryxell`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |>
+  drop_na() |> 
+  mutate(date = ymd(date), 
+         ice_abundance = sediment, 
+         sediment_abundance = 1-sediment) |> 
+  drop_na()
 
+write_csv(output_for_save, "Documents/R-Repositories/MCM-LTER-MS/data/sediment abundance data/LANDSAT_wholelake_mean_20250307.csv")
+
+# Plot results
+ggplot(output_to_save, aes(date, sediment_abundance)) + 
+  geom_point() + 
+  facet_wrap(vars(lake)) + 
+  ggtitle("Landsat") + 
+  theme_minimal()
+
+ggplot(output_to_save, aes(date, ice_abundance)) + 
+  geom_point() + 
+  facet_wrap(vars(lake)) + 
+  ggtitle("Landsat") + 
+  theme_minimal()
