@@ -4,16 +4,18 @@ library(tidyverse)
 library(lubridate)
 library(broom)
 library(ggpubr)
+library(RColorBrewer)
+library(scales)
 
 #set working directory
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 #load file
-sedi <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_600m_20250301.csv") |> 
+sedi <- read_csv("data/sediment abundance data/LANDSAT_all_buffer_distances_20250301.csv") |> 
   mutate(date = ymd(date), 
-         mean_coverage = sediment_abundance*100, 
          year = year(date), 
-         month = month(date))
+         month = month(date), 
+         buffer_distance = as.character(buffer_distance))
 
 #un-comment this out if using a file with the old lake naming
 #sed$lake[sed$lake== "fryxell"] = "Lake Fryxell"
@@ -21,82 +23,55 @@ sedi <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_600m_
 #sed$lake[sed$lake== "eastlobe"] = "East Lake Bonney"
 #sed$lake[sed$lake== "westlobe"] = "West Lake Bonney"
 
-
-## test to fix the seasons issue
-get_season <- function(date) {
-  month <- month(date)
-  year <- year(date)
-  
-  if (month %in% c(11, 12)) {
-    return(paste0("Summer ", year))  # November and December belong to the current winter
-  } else if (month == 1) {
-    return(paste0("Summer ", year - 1))  # January belongs to the previous winter
-  } else if (month == 2) {
-    return(paste0("Summer ", year - 1))  # February belongs to the previous winter
-  } else if (month == 3) {
-    return(paste0("Fall ", year))  # March is Spring
-  } else if (month %in% 4:5) {
-    return(paste0("Fall ", year))  # April and May are Spring
-  } else if (month == 6) {
-    return(paste0("Winter ", year))  # June is Summer
-  } else if (month %in% 7:8) {
-    return(paste0("Winter ", year))  # July and August are Summer
-  } else if (month == 9) {
-    return(paste0("Spring ", year))  # September is Fall
-  } else if (month %in% 10) {
-    return(paste0("Summer ", year))  # October is Fall
-  }
-}
-
 #plot sediment abundances
-ggplot(sedi, aes(date, mean_coverage)) + 
+ggplot(sedi, aes(date, ice_abundance, color = buffer_distance)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
   theme_linedraw(base_size = 15) + 
-  ggtitle("Sediment Estimate", 
+  ggtitle("Ice Abundance", 
           subtitle = "Landsat") + 
+  scale_color_brewer(palette = "Set1") + 
   xlab("Date") + ylab("Percent Coverage (%)")
 
-ggsave("plots/manuscript_plots/wholelakesed.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
-
-
-# Apply the function and group by season
-alllakes <- sedi |> 
-  mutate(season = sapply(date, get_season), 
-         year = year(date), 
-         month = month(date))
+#ggsave("plots/manuscript_plots/wholelakesed.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
 
 ## load lake ice: 
-lakeice <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv") |> 
+lakeice1 <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv") |> 
   mutate(date_time = mdy_hm(date_time), 
          month = month(date_time), 
          year = year(date_time),
          year = as.numeric(year),
          z_water_m = z_water_m*-1) |> 
   filter(lake == "Lake Fryxell" | lake == "Lake Hoare" | lake == "East Lake Bonney" | lake == "West Lake Bonney") |> 
-  filter(year >= 2016)
+  #filter(year >= 2016) |> 
+  filter(!grepl("^B", location_name))
 
-ggplot(lakeice, aes(date_time, z_water_m)) + 
+ggplot(lakeice1, aes(date_time, z_water_m)) + 
   geom_point() + 
-  geom_smooth(se = F) + 
+  geom_smooth(se = T) + 
   facet_wrap(vars(lake)) + 
   theme_linedraw(base_size = 15) + 
   xlab("Date") + ylab("Percent Coverage (%)") + 
-  ggtitle("Ice thickness (m) 2016-2023", 
+  ggtitle("Ice thickness (m) 1993-2024", 
           subtitle = "ice to water measurement")
+
+ggsave("plots/manuscript/chapter 1/ice_thickness_total_years.png", dpi = 700, 
+       height = 8, width = 12)
+
+lakeice = lakeice1 |> 
+  filter(year >= 2016)
 
 li_summary = lakeice |> 
   group_by(year, month, lake) |> 
-  summarize(mean_thickness = mean(z_water_m, na.rm = T)) |> 
-  filter(year > 2014)
+  summarize(mean_thickness = mean(z_water_m, na.rm = T))
 
 ## sediment
-sed <- alllakes |> 
+sed_monthly <- sedi |> 
   group_by(year, month, lake) |> 
   summarize(mean_sed = mean(sediment_abundance, na.rm = T)) |> 
   print()
 
-fulljoined = full_join(sed, li_summary) |> 
+fulljoined = full_join(sed_monthly, li_summary) |> 
   drop_na()
 
 ##### plot
