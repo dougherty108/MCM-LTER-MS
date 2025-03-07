@@ -117,8 +117,8 @@ time_model <- start_time + seq(0, by = dt * 86400, length.out = nt)  # Convert d
 #air_temperature <- air_temp_gaps |> 
 #  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), wlbbb_airtemp$airtemp_3m_K, airtemp_3m_K))
 
-ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-  geom_path()
+#ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
+#  geom_path()
 
 #ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
 #  geom_line()
@@ -163,8 +163,8 @@ artificial_longwave_out <- air_temperature |>
   select(date_time, airtemp_3m_K) |> 
   mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.96)
 
-ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
-  geom_path()
+#ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
+#  geom_path()
 
 #artificial_longwave_out <- FRLM |> 
 #  mutate(airtemp_1m_degc = ifelse(is.na(airtemp_1m_degc), HOEM$airtemp_1m_degc, airtemp_1m_degc)) |> # fill holes in 1m temp with HOEM data
@@ -179,8 +179,8 @@ outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |>
   mutate(lwradout2_wm2 = ifelse(is.na(lwradout2_wm2), lwout, lwradout2_wm2)) |>   # Fill missing values
   select(-lwout)  
 
-ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) + 
-  geom_line()
+##ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) + 
+#  geom_line()
 
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
@@ -223,8 +223,8 @@ artificial_longwave_in <- artificial_lw_in |>
   mutate(lwin = (0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)
 
 # incoming longwave looks pretty good (downwelling)
-ggplot(artificial_longwave_in, aes(date_time, lwin)) + 
-  geom_line()
+#ggplot(artificial_longwave_in, aes(date_time, lwin)) + 
+#  geom_line()
 
 #join to fill gaps
 incoming_longwave_radiation <- incoming_longwave_radiation_initial |> 
@@ -255,7 +255,7 @@ ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1)
 ############ ALBEDO CORRECTION ###########
 # Read and prepare the data
 albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250301.csv") |>  
-  mutate(sediment = sediment_abundance) |> 
+  #mutate(sediment = sediment_abundance) |> 
   filter(lake == "Lake Fryxell") |> 
   mutate(date = ymd(date), 
          month = month(date), 
@@ -385,7 +385,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 0.1402 + ((albedo_interp)*0.6775),  # albedo, unitless (lower albedo value from measured FRLM data)
+  albedo = 0.18 + ((albedo_interp)*0.62),  # albedo, unitless (lower albedo value from measured FRLM data)
   #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
   #albedo = albedo_interp,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
@@ -400,11 +400,11 @@ series <- time_series |>
   pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind, delta_T), 
                names_to = "variable", values_to = "data")
   
-#ggplot(series, aes(time, data)) + 
-##  geom_line() + 
-#  xlab("Date") + ylab("Value") +
-#  facet_wrap(vars(variable), scales = "free") + 
-#  theme_minimal()
+ggplot(series, aes(time, data)) + 
+  geom_path() + 
+  xlab("Date") + ylab("Value") +
+  facet_wrap(vars(variable), scales = "free") + 
+  theme_minimal()
 
 ###NOTES: The longwave estimations are still a mess. The SW gap fills looks pretty good to me, although there's 
 # pretty bad fit in 2023-2024. 
@@ -580,7 +580,7 @@ results |>
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_bw(base_size = 15)
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_modeled.png", width = 9, height = 6, dpi = 700)
+#ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_modeled.png", width = 9, height = 6, dpi = 700)
 
 #troubleshooting plots, to find distance of change at top and bottom
 plot(dL_bottom.vec)
