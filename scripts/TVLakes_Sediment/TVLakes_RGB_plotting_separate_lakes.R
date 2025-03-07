@@ -4,13 +4,9 @@ library(sf)
 library(tidyverse)
 library(lubridate)
 library(stars)
-library(MetBrewer)
 
 setwd("~/Google Drive/My Drive/EarthEngine/landsat/RGB_images")
 files <- list.files(pattern = ".tif")
-
-# Select color palette
-met_palette <- MetBrewer::met.brewer("Hokusai2")
 
 # Extract type from filename
 get_type <- function(filename) {
