@@ -220,7 +220,7 @@ artificial_longwave_in <- artificial_lw_in |>
   mutate(date = as.Date(date_time)) |> 
   left_join(cloud_cover_df, by = "date") |> 
   select(-date) |> # Remove the helper date column
-  mutate(lwin = (0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)
+  mutate(lwin = ((0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)*0.96)
 
 # incoming longwave looks pretty good (downwelling)
 #ggplot(artificial_longwave_in, aes(date_time, lwin)) + 
@@ -232,8 +232,8 @@ incoming_longwave_radiation <- incoming_longwave_radiation_initial |>
   mutate(lwradin2_wm2 = ifelse(is.na(lwradin2_wm2), lwin, lwradin2_wm2)) |>   # Fill missing values
   select(-lwin)   # Remove extra column 
 
-#ggplot(incoming_longwave_radiation, aes(date_time, lwradin2_wm2)) + 
-#  geom_line()
+ggplot(incoming_longwave_radiation, aes(date_time, lwradin2_wm2)) + 
+  geom_line()
 
 # select air pressure data from Lake Hoare Met
 air_pressure = HOEM |> 
@@ -385,7 +385,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 0.18 + ((albedo_interp)*0.62),  # albedo, unitless (lower albedo value from measured FRLM data)
+  albedo = 0.18 + ((albedo_interp)*0.64),  # albedo, unitless (lower albedo value from measured FRLM data)
   #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
   #albedo = albedo_interp,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
