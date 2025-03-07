@@ -81,25 +81,82 @@ ggsave("plots/manuscript/chapter 1/whole_lake_vs_BB_ice_abundance.png", dpi = 70
 
 
 
-
 ######### investing different buffering distances #########
+mean_150m <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_150m_20250301.csv") |> 
+  mutate(date = ymd(date), 
+         buffer_distance = '150')
+
 mean_300m = mean_BB |> 
-  mutate(buffer_distance = 300) |> 
+  mutate(buffer_distance = '300') |> 
   select(-type)
 
 mean_450m = read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_450m_20250301.csv") |> 
   mutate(date = ymd(date), 
-         buffer_distance = 450)
+         buffer_distance = '450')
 
 mean_600m = read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_600m_20250301.csv") |> 
   mutate(date = ymd(date), 
-         buffer_distance = 600)
+         buffer_distance = '600') |> 
+  select(-approx_albedo)
 
 mean_900m = read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_900m_20250301.csv") |> 
   mutate(date = ymd(date), 
-         buffer_distance = 900)
+         buffer_distance = '900')
 
-buffers <- rbind(mean_300m, mean_450m, mean_600m, mean_900m)
+buffers <- rbind(mean_150m, mean_300m, mean_450m, mean_600m, mean_900m) |> 
+  mutate(ice_abundance = ice_abundance*100, 
+         sediment_abundance = sediment_abundance*100, 
+         season = sapply(date, get_season)) |> 
+  select(-sediment)
 
+write_csv(buffers, "data/sediment abundance data/LANDSAT_all_buffer_distances_20250301.csv")
 
+### plot cropping distance comparisons
+#sed
+ggplot(buffers, aes(date, sediment_abundance, color = buffer_distance)) + 
+  geom_point() + 
+  scale_color_brewer(palette = "Set1") + 
+  facet_wrap(vars(lake)) + 
+ # scale_x_date(labels = date_format("%b"), breaks = "1 month") + 
+  xlab("Date") + ylab("Sediment Abundance (%)") + 
+  theme_linedraw(base_size = 15)
 
+ggsave("plots/manuscript/chapter 1/comparison_of_buffer_distances_sed_bylake.png", dpi = 700, 
+       height = 8, width = 10)
+
+#ice
+ggplot(buffers, aes(date, ice_abundance, color = buffer_distance)) + 
+  geom_point() + 
+  scale_color_brewer(palette = "Set1") + 
+  facet_wrap(vars(lake)) + 
+  # scale_x_date(labels = date_format("%b"), breaks = "1 month") + 
+  xlab("Date") + ylab("Ice Abundance (%)") + 
+  theme_linedraw(base_size = 15)
+
+ggsave("plots/manuscript/chapter 1/comparison_of_buffer_distances_sed_bylake.png", dpi = 700, 
+       height = 8, width = 10)
+
+## facet by season
+#ice
+ggplot(buffers, aes(date, ice_abundance, color = buffer_distance)) + 
+  geom_point() + 
+  scale_color_brewer(palette = "Set1") + 
+  facet_wrap(vars(lake, season), scales = "free") + 
+  scale_x_date(labels = date_format("%b"), breaks = "1 month") + 
+  xlab("Date") + ylab("Ice Abundance (%)") + 
+  theme_linedraw(base_size = 10)
+
+ggsave("plots/manuscript/chapter 1/comparison_of_buffer_distances_sed_byseason.png", dpi = 700, 
+       height = 10, width = 10)
+
+#sed
+ggplot(buffers, aes(date, sediment_abundance, color = buffer_distance)) + 
+  geom_point() + 
+  scale_color_brewer(palette = "Set1") + 
+  facet_wrap(vars(lake, season), scales = "free") + 
+  scale_x_date(labels = date_format("%b"), breaks = "1 month") + 
+  xlab("Date") + ylab("Sediment Abundance (%)") + 
+  theme_linedraw(base_size = 10)
+
+ggsave("plots/manuscript/chapter 1/comparison_of_buffer_distances_sed_byseason.png", dpi = 700, 
+       height = 10, width = 10)
