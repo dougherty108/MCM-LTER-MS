@@ -57,16 +57,35 @@ met_stations <- rbind(FRLM, HOEM, BOYM) |>
 
 # join the two data sets
 ice_met <- ice_thickness_weekly |> 
-  full_join(met_stations, by = join_by(year, week, lake))
+  full_join(met_stations, by = join_by(year, week, lake)) |> 
+  filter(week == 50 | week == 51 | week == 52 | 
+           week == 1 | week == 2 | week == 3)
 
 # plot comparison
-ggplot(ice_met, aes(z_water_m, mean_airtemp)) + 
-  geom_point()
+ggplot(ice_met, aes(mean_airtemp, z_water_m)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
 
 ggplot(ice_met, aes(z_water_m, mean_swradin)) + 
-  geom_point()
+  geom_point() + 
+  geom_smooth(method = "lm")
 
 ggplot(ice_met, aes(z_water_m, mean_wspd)) + 
-  geom_point()
+  geom_point() + 
+  geom_smooth(method = "lm")
+
+ice_met_studyperiod <- ice_met |> 
+  filter(year > 2016)
 
 
+ggplot(ice_met_studyperiod, aes(mean_airtemp, z_water_m)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
+
+ggplot(ice_met_studyperiod, aes(z_water_m, mean_swradin)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
+
+ggplot(ice_met_studyperiod, aes(z_water_m, mean_wspd)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
