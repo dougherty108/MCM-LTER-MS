@@ -13,21 +13,21 @@ BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
          year = year(date_time),
          month = month(date_time),
          week = week(date_time)) |> 
-  select(c(metlocid, date_time, airtemp_3m_degc, wspd_ms, swradin_wm2))
+  select(c(metlocid, year, month, week, date_time, airtemp_3m_degc, wspd_ms, swradin_wm2))
 
 HOEM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_hoem_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time), 
          year = year(date_time),
          month = month(date_time),
          week = week(date_time)) |> 
-  select(c(metlocid, date_time, airtemp_3m_degc, wspd_ms, swradin_wm2))
+  select(c(metlocid, year, month, week, date_time, airtemp_3m_degc, wspd_ms, swradin_wm2))
 
 FRLM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_frlm_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time), 
          year = year(date_time),
          month = month(date_time),
          week = week(date_time)) |> 
-  select(c(metlocid, date_time, airtemp_3m_degc, wspd_ms, swradin_wm2))
+  select(c(metlocid, year, month, week, date_time, airtemp_3m_degc, wspd_ms, swradin_wm2))
 
 # add in data
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
@@ -46,3 +46,10 @@ ice_thickness_weekly <- ice_thickness |>
   summarize(z_water_m = mean((z_water_m*-1), na.rm = T), 
             z_ice_m = mean(z_ice_m, na.rm = T))
 
+met_stations <- rbind(FRLM, HOEM, BOYM) |> 
+  group_by(year, week, metlocid) |> 
+  summarize(mean_wspd = mean(wspd_ms), 
+            mean_airtemp = mean(airtemp_3m_degc), 
+            mean_swradin = mean(swradin_wm2))
+
+# join the two data sets
