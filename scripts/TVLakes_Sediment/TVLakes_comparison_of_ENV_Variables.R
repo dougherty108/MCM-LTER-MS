@@ -6,3 +6,5 @@
 library(tidyverse)
 library(lubridate)
 
+# add in data
+ice_thickness <- read_csv("data/lake ice/mcmlter")
