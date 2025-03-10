@@ -1,19 +1,9 @@
 ######### TVLakes Sediment Output Comparison ###########
-
 library(tidyverse)
 library(RColorBrewer)
 library(scales)
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
-
-mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250301.csv") |> 
-  mutate(date = ymd(date), 
-         type = 'lake_monitoring_station') |> 
-  select(-`approx_albedo`)
-
-mean_wholelake <- read_csv("data/sediment abundance data/LANDSAT_wholelake_mean_20250307.csv") |> 
-  mutate(date = ymd(date), 
-         type = "whole_lake")
 
 ## Define a season function to plot data by season. Makes data viz a lot easier. 
 get_season <- function(date) {
@@ -41,16 +31,51 @@ get_season <- function(date) {
   }
 }
 
+mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250308.csv") |> 
+  mutate(date = ymd(date), 
+         type = 'lake_monitoring_station', 
+         season = sapply(date, get_season))
+
+#####plot by lake
+ggplot(mean_BB, aes(date, sediment_abundance*100)) + 
+  geom_point() + 
+  facet_wrap(vars(lake)) + 
+  #scale_x_date(labels = date_format("%b"), breaks = "1 month") + 
+  xlab("Date") + ylab("Sediment Abundance (%)") + 
+  theme_linedraw(base_size = 20)
+
+ggsave("plots/manuscript/chapter 1/BB_sed_by_lake.png", dpi = 700, 
+       height = 8, width = 12)
+
+mean_wholelake <- read_csv("data/sediment abundance data/LANDSAT_wholelake_mean_20250307.csv") |> 
+  mutate(date = ymd(date), 
+         type = "whole_lake", 
+         season = sapply(date, get_season))
+
 # join the two files for easy comparison and plotting
 means <- rbind(mean_BB, mean_wholelake) |> 
-  mutate(season = sapply(date, get_season), 
-         sediment_abundance = sediment_abundance*100, 
-         ice_abundance = ice_abundance*100)
+  mutate(sediment_abundance = sediment_abundance*100, 
+         ice_abundance = ice_abundance*100) |> 
+  mutate(year = year(date), 
+         month = month(date))
 
 ## plot the raw output for sediment abundance/ice abundance against each other and see how the outputs compare
 ggplot(means, aes(date, sediment_abundance, color = type)) + 
   geom_point() + 
   scale_color_brewer(palette = "Set1") 
+
+#By season for just the lake monitoring site
+ggplot(mean_BB, aes(date, sediment_abundance*100, color = lake)) + 
+  geom_point() + 
+  geom_smooth(se = F) + 
+  scale_color_brewer(palette = "Set1") + 
+  facet_wrap(vars(season), scales = "free") +
+  scale_x_date(labels = date_format("%b"), breaks = "1 month") + 
+  xlab("Date") + ylab("Sediment Abundance (%)") + 
+  theme_linedraw(base_size = 20)
+
+ggsave("plots/manuscript/chapter 1/BB_sed_by_season.png", dpi = 700, 
+       height = 8, width = 12)
 
 # facet by season for sed abundance
 ggplot(means, aes(date, sediment_abundance, color = type)) + 
@@ -95,23 +120,47 @@ ggplot(lakeice1, aes(date_time, z_water_m)) +
   geom_smooth(se = T) + 
   facet_wrap(vars(lake)) + 
   theme_linedraw(base_size = 15) + 
-  xlab("Date") + ylab("Percent Coverage (%)") + 
+  xlab("Date") + ylab("Ice Thickness (m)") + 
   ggtitle("Ice thickness (m) 1993-2024", 
           subtitle = "ice to water measurement")
 
-ggsave("plots/manuscript/chapter 1/ice_thickness_total_years.png", dpi = 700, 
-       height = 8, width = 12)
+#ggsave("plots/manuscript/chapter 1/ice_thickness_total_years.png", dpi = 700, 
+#       height = 8, width = 12)
 
 lakeice = lakeice1 |> 
-  filter(year >= 2016)
+  filter(year >= 2017) |> 
+  mutate(season = sapply(date_time, get_season))
+
+#FIND SEASONAL DROPOFF OF ICE THICKNESS
+seasonal_changes <- lakeice %>%
+  group_by(season, lake) |> 
+  arrange(season, month) %>%
+  summarise(
+    First_Measurement = first(z_water_m*-1),
+    Last_Measurement = last(z_water_m*-1),
+    Difference = Last_Measurement - First_Measurement
+  )
+
+ggplot(seasonal_changes, aes(season, Difference), fill = lake) + 
+  geom_col() + 
+  scale_color_brewer(palette = "Set1") + 
+  facet_wrap(vars(lake)) + 
+  theme_linedraw(base_size = 20) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  xlab("Seasonal") + ylab("Change in Ice Thickness")
+
+ggsave("plots/manuscript/chapter 1/seasonal_ice_drop.png", 
+       height = 8, width = 12, dpi = 300)
 
 li_summary = lakeice |> 
+  mutate(week = week(date_time)) |> 
   group_by(year, month, lake) |> 
   summarize(mean_thickness = mean(z_water_m, na.rm = T))
 
 ## sediment
-sed_monthly <- sedi |> 
-  group_by(year, month, lake, buffer_distance) |> 
+sed_monthly <- means |> 
+  mutate(week = week(date)) |> 
+  group_by(year, month, lake, type) |> 
   summarize(mean_sed = mean(sediment_abundance, na.rm = T)) |> 
   print()
 
@@ -119,42 +168,142 @@ fulljoined = full_join(sed_monthly, li_summary) |>
   drop_na()
 
 ##### plot
-ggplot(fulljoined, aes(mean_sed, mean_thickness, color = lake)) + 
+ggplot(fulljoined, aes(mean_sed, mean_thickness, color= type)) + 
   geom_smooth(method = "lm", se = F) + 
   geom_point() + 
-  facet_wrap(vars(buffer_distance), scales = "free") + 
+  facet_wrap(vars(lake), scales = "free") + 
   ggtitle("October-February", 
           subtitle = "whole lake average") + 
+  xlab("Mean Sediment Abundance (%)") + ylab("Mean Ice Thickness (m)") + 
   scale_color_brewer(palette = "Set1") +
-  theme_linedraw() 
+  theme_linedraw(base_size = 20) 
+
+ggsave("plots/manuscript/chapter 1/sed_vs_ice_thickness.png", 
+       width = 12, height = 8, dpi = 300)
 
 ### now remove November and October Values
-fulljoin_filter <- fulljoined |> 
-  filter(month == 12 | month == 1)
+#fulljoin_filter <- fulljoined |> 
+#  filter(month == 12 | month == 1)
+fulljoin_peak_solar <- fulljoined |> 
+  filter(month == 1)
 
-ggplot(fulljoin_filter, aes(mean_sed, mean_thickness, color = lake)) + 
+ggplot(fulljoin_peak_solar, aes(mean_sed, mean_thickness, color = type)) + 
   geom_smooth(method = "lm", se = F) + 
   geom_point() + 
-  facet_wrap(vars(buffer_distance), scales = "free") + 
-  ggtitle("December-January", 
-          subtitle = "whole lake average") + 
+  facet_wrap(vars(lake), scales = "free") + 
+  ggtitle("January") + 
   scale_color_brewer(palette = "Set1") +
-  theme_linedraw(base_size = 15) 
+  theme_linedraw(base_size = 20) 
+
+ggsave("plots/manuscript/chapter 1/wholelakesed_vsthickness.png", 
+       width = 12, height = 8, dpi = 300)
 
 # now filter for only early year estimates, October - December
 oct_dec_fulljoin <- fulljoined |> 
   filter(month == 10 | month == 11 | month == 12)
 
-ggsave("plots/GEE/alllakes/analysis plots/wholelakesed_vsthickness.png", width = 6.5, height = 3.5, units = "in", dpi = 500)
-
-ggplot(oct_dec_fulljoin, aes(mean_sed, mean_thickness, color = lake)) + 
+ggplot(oct_dec_fulljoin, aes(mean_sed, mean_thickness, color = type)) + 
   geom_smooth(method = "lm", se = F) + 
   geom_point() + 
-  facet_wrap(vars(buffer_distance), scales = "free") + 
+  facet_wrap(vars(lake), scales = "free") + 
   ggtitle("October - December", 
           subtitle = "whole lake average") + 
   scale_color_brewer(palette = "Set1") +
   theme_linedraw(base_size = 15) 
+
+jan_fulljoin <- fulljoined |> 
+  filter(month == 1)
+
+ggplot(jan_fulljoin, aes(mean_sed, mean_thickness, color = type)) + 
+  geom_smooth(method = "lm", se = F) + 
+  geom_point() + 
+  facet_wrap(vars(lake), scales = "free") + 
+  ggtitle("January") + 
+  scale_color_brewer(palette = "Set1") +
+  xlab("Mean Sediment Abundance (%)") + ylab("Mean Ice Thickness (m)") + 
+  theme_linedraw(base_size = 20)  
+
+ggsave("plots/manuscript/chapter 1/jan_only_sed.png", 
+       dpi = 300, height = 8, width = 12)
+
+
+####### do restructuring to look at this by week ###
+li_summary_2 = lakeice |> 
+  mutate(week = week(date_time)) |> 
+  group_by(year, week, lake) |> 
+  summarize(mean_thickness = mean(z_water_m, na.rm = T))
+
+## sediment
+sed_monthly_2 <- means |> 
+  mutate(week = week(date)) |> 
+  group_by(year, week, lake, type) |> 
+  summarize(mean_sed = mean(sediment_abundance, na.rm = T)) |> 
+  print()
+
+fulljoined_2 = full_join(sed_monthly_2, li_summary_2) |> 
+  drop_na() |> 
+  filter(type == "lake_monitoring_station")
+
+peak_solar_week <- fulljoined_2 |> 
+  filter(
+    #week == 50 |
+      week == 51 | 
+      week == 52 | 
+      week == 1 | 
+      week == 2 #|
+      #week == 3
+      )
+
+ggplot(peak_solar_week, aes(mean_sed, mean_thickness)) + 
+  geom_smooth(method = "lm", se = F) + 
+  geom_point() + 
+  facet_wrap(vars(lake), scales = "free") + 
+  ggtitle("Peak Solar") + 
+  scale_color_brewer(palette = "Set1") +
+  xlab("Mean Sediment Abundance (%)") + ylab("Mean Ice Thickness (m)") + 
+  theme_linedraw(base_size = 20)  
+
+ggsave("plots/manuscript/chapter 1/Peak_Solar_Comparison.png", 
+       width = 12, height = 8, dpi = 300)
+
+#### Create a dual panel plot where only the lake ice thickness from 2016-2024 to sediment abundannce
+# Need to join the sed data frame to the lake ice data frame
+mean_BB_week <- mean_BB |> 
+  filter(date < "2023-02-01")
+
+library(ggpubr)
+
+plot1 <- ggplot(mean_BB_week, aes(date, sediment_abundance*100)) + 
+  geom_point() + 
+  geom_smooth(se = F) + 
+  ylab("Sediment Abundance") + xlab("Date") + 
+  ggtitle("Sediment Abundance (%)") + 
+  facet_wrap(vars(lake), scales = "free") + 
+  scale_color_brewer(palette = "Set1") +
+  theme_linedraw(base_size = 20) 
+
+plot2 <- ggplot(lakeice, aes(date_time, z_water_m)) + 
+  geom_point() + 
+  geom_smooth(se = F) + 
+  ylab("Ice Thickness (m)") + xlab("Date") + 
+  ggtitle("Ice Thickness") + 
+  facet_wrap(vars(lake), scales = "free") + 
+  scale_color_brewer(palette = "Set1") +
+  theme_linedraw(base_size = 20)
+
+ggarrange(plot1, plot2)
+
+ggsave("plots/manuscript/chapter 1/sed_abundance_ice_thick_timeseries.png", 
+       dpi = 300, height = 8, width = 12)
+
+ggplot() + 
+  geom_point(data = lakeice, aes(x = as.Date(date_time), y = z_water_m)) + 
+  geom_point(data = mean_BB, aes(x = date, y = sediment_abundance)) + 
+  facet_wrap(vars(lake)) + 
+  xlab("Date") + ylab("Ice thickness (m)") +
+  scale_color_brewer(palette = "Set1") +
+  theme_linedraw(base_size = 20) 
+
 
 
 
