@@ -4,17 +4,17 @@ library(tidyverse)
 setwd("/Users/charliedougherty/Documents/R-Repositories/MCM-LTER-MS")
 
 # load file
-GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250304.csv") |> 
+GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250311.csv") |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   mutate(time = ymd_hms(time)) |> 
   filter(time < "2023-02-01")
 
 # ice thickness data
-ice_thick <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv") |>
+ice_thick <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv") |>
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
-  filter(lake == "East Lake Bonney", 
+  filter(location_name == "East Lake Bonney", 
          ) |> 
   filter(date_time > "2016-12-01" & date_time < "2025-02-01") |> 
   group_by(date_time) |> 

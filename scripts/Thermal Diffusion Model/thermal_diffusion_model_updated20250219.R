@@ -247,10 +247,10 @@ wind_speed = BOYM |>
   mutate(wspd_ms = ifelse(is.na(wspd_ms), TARM$wspd_ms, wspd_ms)) # fill in lost wind values from TARM, next nearest met station
 
 # load ice thickness data and manipulate for easier plotting
-ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv") |>
+ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv") |>
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
-  filter(lake == "East Lake Bonney") |> 
+  filter(location_name == "East Lake Bonney") |> 
   filter(date_time > "2016-12-01" & date_time < "2025-02-01")
 
 ############ ALBEDO CORRECTION ###########
@@ -596,6 +596,6 @@ ggplot(series, aes(time, data)) +
 
 
 # save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250304.csv")
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250311.csv")
 
 ############## can check the outputs against actual ice thickness in Model_output_interrogation.R

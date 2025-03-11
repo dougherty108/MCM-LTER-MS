@@ -5,7 +5,7 @@ library(lubridate)
 library(stars)
 library(MetBrewer)
 
-setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250301")
+setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250308")
 files <- list.files(pattern = ".tif")
 
 # Select color palette
@@ -17,7 +17,7 @@ get_type <- function(filename) {
 }
 
 # Create output directories for each type
-output_base <- "~/Documents/R-Repositories/MCM-LTER-MS/plots/LANDSAT/20250306"
+output_base <- "~/Google Drive/My Drive/EarthEngine/plots/20250311"
 dir.create(output_base, showWarnings = FALSE)
 
 types <- unique(na.omit(sapply(files, get_type)))
@@ -27,12 +27,11 @@ for (t in types) {
 
 # Loop to create and save plots
 for (i in 1:length(files)) {
-  setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250301")
+  setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250308")
   
   raster_file <- raster(files[[i]])
   raster_df <- as.data.frame(raster_file, xy = TRUE) |> 
     drop_na()
-  #colnames(raster_df)[3] <- ""
   
   raster_df = raster_df |> 
     mutate(sediment_abundance = (1 - ice_endmember))
@@ -50,7 +49,7 @@ for (i in 1:length(files)) {
       labs(title = paste0(type, " - ", year), x = "Easting", y = "Northing") +
       theme_minimal()
     
-    setwd("~/Documents/R-Repositories/MCM-LTER-MS/plots/LANDSAT/20250306")
+    setwd("~/Google Drive/My Drive/EarthEngine/plots/20250311")
     ggsave(filename = plot_path)
     print(paste0("Saved plot for ", type, " - ", year, " (", i, "/", length(files), ")"))
   }
