@@ -57,12 +57,12 @@ for (i in seq_along(files)) {
 }
 
 output_corr <- output |> 
-  
+  mutate(`Lake Fryxell` = 1-`Lake Fryxell`)
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 # Transform and save output
-output_to_save <- output |> 
+output_to_save <- output_corr |> 
   pivot_longer(cols = c(`East Lake Bonney`, `Lake Hoare`, `Lake Fryxell`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |>
   drop_na() |> 
   mutate(date = ymd(date), 

@@ -86,7 +86,7 @@ wholelake <- read_csv("data/sediment abundance data/LANDSAT_wholelake_mean_20250
   group_by(lake) |> 
   mutate(weekly_difference = weekly_mean - lag(weekly_mean))
 
-sed_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250308.csv") |> 
+sed_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250311.csv") |> 
   mutate(date = ymd(date), 
          type = "blue_box", 
          week = week(date), 
