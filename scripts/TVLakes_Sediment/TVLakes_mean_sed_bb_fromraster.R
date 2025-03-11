@@ -5,9 +5,9 @@ library(tidyverse)
 
 setwd("~charliedougherty")
 
-files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250301", pattern = ".tif", full.names = TRUE)
+files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250308", pattern = ".tif", full.names = TRUE)
 
-setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250301")
+setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250308")
 
 # Predefine output tibble
 output <- tibble(
@@ -28,7 +28,7 @@ points_df <- data.frame(
 # Convert to sf object and buffer
 points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
 # Buffer after ensuring the correct CRS
-buffered_points_sf <- st_buffer(points_sf, dist = 150)
+buffered_points_sf <- st_buffer(points_sf, dist = 300)
 
 # Convert `sf` buffer object to `Spatial` before using extract()
 buffered_points_sp <- as(buffered_points_sf, "Spatial")  
@@ -56,6 +56,9 @@ for (i in seq_along(files)) {
   print(i)  # Keep track of progress
 }
 
+output_corr <- output |> 
+  
+
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 # Transform and save output
@@ -67,7 +70,7 @@ output_to_save <- output |>
          sediment_abundance = 1-sediment) |> 
   drop_na()
 
-write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_150m_20250301.csv")
+write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250311.csv")
 
 # Plot results
 ggplot(output_to_save, aes(date, sediment_abundance)) + 
