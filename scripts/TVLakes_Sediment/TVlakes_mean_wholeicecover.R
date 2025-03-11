@@ -8,7 +8,7 @@ library(tidyverse)
 
 setwd("~charliedougherty")
 
-files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250301", pattern = ".tif", full.names = TRUE)
+files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250308", pattern = ".tif", full.names = TRUE)
 
 setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250301")
 
