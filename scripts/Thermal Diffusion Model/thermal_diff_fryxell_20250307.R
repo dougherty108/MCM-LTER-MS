@@ -233,12 +233,13 @@ wind_speed = FRLM |>
 ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv") |>
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
-  filter(location_name == "Lake Fryxell") |> 
+  filter(location_name == "Lake Fryxell", 
+         location = grepl()) |> 
   filter(date_time > "2016-12-01" & date_time < "2025-02-01")
 
 ############ ALBEDO CORRECTION ###########
 # Read and prepare the data
-albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250301.csv") |>  
+albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250308.csv") |>  
   #mutate(sediment = sediment_abundance) |> 
   filter(lake == "Lake Fryxell") |> 
   mutate(date = ymd(date), 
@@ -369,9 +370,8 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 0.18 + ((albedo_interp)*0.64),  # albedo, unitless (lower albedo value from measured FRLM data)
-  #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
-  #albedo = albedo_interp,
+  albedo = 0.1402 + ((albedo_interp)*0.68),# albedo, unitless (lower albedo value from measured FRLM data) 
+  #albedo = albedo_interp,                  # raw-albedo (which is to say, not albedo, sediment abundance)
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
   delta_T = T_air - lag(T_air),             # difference in air temperature, for later flux calculation
@@ -384,11 +384,11 @@ series <- time_series |>
   pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind, delta_T), 
                names_to = "variable", values_to = "data")
   
-ggplot(series, aes(time, data)) + 
-  geom_path() + 
-  xlab("Date") + ylab("Value") +
-  facet_wrap(vars(variable), scales = "free") + 
-  theme_minimal()
+#ggplot(series, aes(time, data)) + 
+#  geom_path() + 
+#  xlab("Date") + ylab("Value") +
+#  facet_wrap(vars(variable), scales = "free") + 
+#  theme_minimal()
 
 ###NOTES: The longwave estimations are still a mess. The SW gap fills looks pretty good to me, although there's 
 # pretty bad fit in 2023-2024. 
@@ -560,9 +560,9 @@ results |>
   ggplot(aes(x = time, y = thickness)) +
   geom_line(color = "red", size = 1) +
   labs(x = "Time", y = "Ice Thickness (m)",
-       title = "") +
+       title = "Lake Fryxell") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
-  theme_bw(base_size = 15)
+  theme_linedraw(base_size = 15)
 
 #ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_modeled.png", width = 9, height = 6, dpi = 700)
 
