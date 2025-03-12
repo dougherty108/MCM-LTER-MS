@@ -239,7 +239,7 @@ ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.c
 
 ############ ALBEDO CORRECTION ###########
 # Read and prepare the data
-albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250308.csv") |>  
+albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250312.csv") |>  
   #mutate(sediment = sediment_abundance) |> 
   filter(lake == "Lake Fryxell") |> 
   mutate(date = ymd(date), 
@@ -370,7 +370,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 0.1402 + ((albedo_interp)*0.68),# albedo, unitless (lower albedo value from measured FRLM data) 
+  albedo = 0.1402 + ((albedo_interp)*0.64),# albedo, unitless (lower albedo value from measured FRLM data) 
   #albedo = albedo_interp,                  # raw-albedo (which is to say, not albedo, sediment abundance)
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
@@ -576,6 +576,8 @@ ggplot(series, aes(time, data)) +
   xlab("Date") + ylab("Value") +
   facet_wrap(vars(variable), scales = "free") + 
   theme_minimal(base_size = 15)
+
+ggsave("plots/manuscript/chapter 2/model_input_data.png")
 
 
 # save output to model outputs file, interrogation in different script
