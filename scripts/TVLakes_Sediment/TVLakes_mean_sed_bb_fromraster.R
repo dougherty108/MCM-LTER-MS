@@ -57,7 +57,8 @@ for (i in seq_along(files)) {
 }
 
 output_corr <- output |> 
-  mutate(`Lake Fryxell` = 1-`Lake Fryxell`)
+  mutate(`Lake Fryxell` = 1-`Lake Fryxell`, 
+         `Lake Hoare` = 1-`Lake Hoare`)
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
@@ -70,7 +71,7 @@ output_to_save <- output_corr |>
          sediment_abundance = 1-sediment) |> 
   drop_na()
 
-write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250311.csv")
+write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250312.csv")
 
 # Plot results
 ggplot(output_to_save, aes(date, sediment_abundance)) + 
