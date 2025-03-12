@@ -47,7 +47,7 @@ ggplot(mean_BB, aes(date, sediment_abundance*100)) +
 ggsave("plots/manuscript/chapter 1/BB_sed_by_lake.png", dpi = 700, 
        height = 8, width = 12)
 
-mean_wholelake <- read_csv("data/sediment abundance data/LANDSAT_wholelake_mean_20250307.csv") |> 
+mean_wholelake <- read_csv("data/sediment abundance data/LANDSAT_wholelake_mean_20250312.csv") |> 
   mutate(date = ymd(date), 
          type = "whole_lake", 
          season = sapply(date, get_season))
