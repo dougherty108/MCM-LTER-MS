@@ -31,7 +31,7 @@ get_season <- function(date) {
   }
 }
 
-mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250308.csv") |> 
+mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250312.csv") |> 
   mutate(date = ymd(date), 
          type = 'lake_monitoring_station', 
          season = sapply(date, get_season))

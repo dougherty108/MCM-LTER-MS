@@ -22,10 +22,15 @@ ice_thick <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv")
 
 # plot modeled ice thickness against the measured thickness
 ggplot() + 
-  geom_line(data = GEE_corrected, aes(x = time, y = thickness), linewidth = 1.50) + 
+  geom_line(data = GEE_corrected, aes(x = time, y = thickness), linewidth = 1.25) + 
   geom_point(data = ice_thick, aes(x = date_time, y = mean_thickness), color = "red") +
   xlab("Time") + ylab("Ice Thickness (m)") + 
-  theme_minimal()
+  ggtitle("East Lake Bonney Ice Thickness", 
+          subtitle = "modeled vs. measured") +
+  theme_linedraw(base_size = 20)
+
+ggsave("plots/manuscript/chapter 2/measured_vs_modeled.png", 
+       dpi = 300, height = 8, width = 12)
 
 # sum model output to a daily average, to compare to measured ice thickness
 # goal here is to see how large the gap is between modeled data and measured data 
@@ -34,7 +39,8 @@ modeled_daily <- GEE_corrected |>
   mutate(time = ymd_hms(time), 
          date_time = date(time)) |> 
   group_by(date_time) |> 
-  summarize(modeled_thickness = mean(thickness))
+  summarize(modeled_thickness = mean(thickness)) 
+
 
 ### join two datasets together to compare dates
 comp <- ice_thick |> 
@@ -45,10 +51,10 @@ ggplot(comp, aes(mean_thickness, modeled_thickness)) +
   geom_point() + 
   geom_abline() + 
   xlab("Measured Ice Thickness") + ylab("Modeled Ice Thickness") + 
-  theme_bw(base_size = 15)
+  theme_linedraw(base_size = 20)
 
-#ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
-#       width = 8, height = 6, dpi = 700)
+ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
+       width = 8, height = 6, dpi = 700)
 
 linear_model = lm(modeled_thickness ~mean_thickness, data = comp)
 
