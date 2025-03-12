@@ -73,49 +73,36 @@ if (r > 0.5) stop("r > 0.5, solution may be unstable. Reduce dt or dx.")
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 # select air temperature data from Lake Fryxell Met
-air_temperature <- FRLM |> 
+orig_air_temperature <- FRLM |> 
   mutate(airtemp_3m_degc = ifelse(is.na(airtemp_3m_degc), EXEM$airtemp_3m_degc, airtemp_3m_degc)) |> 
   mutate(airtemp_3m_K = airtemp_3m_degc + 273.15) |> 
-    select(metlocid, date_time, airtemp_3m_K) 
+  dplyr::select(c(date_time, airtemp_3m_K)) 
 
 #ggplot(orig_air_temperature, aes(date_time, airtemp_3m_K)) + 
 #  geom_line()
 
 # Define the start time based on the input data
-start_time <- min(air_temperature$date_time)
+start_time <- min(FRLM$date_time)
 
 # Generate model time steps (POSIXct format)
 time_model <- start_time + seq(0, by = dt * 86400, length.out = nt)  # Convert dt from days to seconds
 
 ## alternative option for air temperature, air temperature at the blue box
-#air_temperature <- read_csv("data/thermal diffusion model data/ice surface temp/air_temp_ELBBB.csv") |> 
-#  mutate(date_time = mdy_hm(date_time), 
-#         airtemp_3m_K = surface_temp_C + 273.15)
-
-#wlbbb_airtemp <- read_csv('data/thermal diffusion model data/ice surface temp/air_temp_WLBBB.csv') |> 
-#  mutate(date_time = mdy_hm(date_time), 
-#         airtemp_3m_K = surface_temp_C + 273.15)
-
-#ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-#  geom_path()
-
-#ggplot(wlbbb_airtemp, aes(date_time, airtemp_3m_K)) + 
-#  geom_path()
-
-#ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-#  geom_line()
+air_temperature <- read_csv("data/thermal diffusion model data/ice surface temp/air_temp_LFBB.csv") |> 
+  mutate(date_time = mdy_hm(date_time), 
+         airtemp_3m_K = surftemp_degc + 273.15)
 
 # Define the full sequence of timestamps at 15-minute intervals
-#full_timestamps <- data.frame(date_time = seq(from = min(air_temperature$date_time), 
-#                                              to = max(air_temperature$date_time), 
-#                                              by = "15 min"))
+full_timestamps <- data.frame(date_time = seq(from = min(air_temperature$date_time), 
+                                              to = max(air_temperature$date_time), 
+                                              by = "15 min"))
 
 # Merge with original data and fill missing values with NA
-#air_temp_gaps <- full_timestamps |> 
-#  left_join(air_temperature, by = "date_time")
+air_temp_gaps <- full_timestamps |>
+  left_join(air_temperature, by = "date_time")
 
-#air_temperature <- air_temp_gaps |> 
-#  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), wlbbb_airtemp$airtemp_3m_K, airtemp_3m_K))
+air_temperature <- air_temp_gaps |> 
+  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), orig_air_temperature$airtemp_3m_K, airtemp_3m_K))
 
 #ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
 #  geom_path()
@@ -126,7 +113,7 @@ time_model <- start_time + seq(0, by = dt * 86400, length.out = nt)  # Convert d
 # select incoming shortwave radiation data from Lake Bonney Met and fill gaps
 # this shortwave object has gaps in the data. Fill the gaps with computed values
 shortwave_radiation_initial <- FRLM |> 
-  select(metlocid, date_time, swradin_wm2) |> 
+  dplyr::select(metlocid, date_time, swradin_wm2) |> 
   mutate(swradin_wm2 = ifelse(is.na(swradin_wm2), EXEM$swradin_wm2, swradin_wm2)) # replace empty shortwave data with TARM, nearest met station
 
 # create an artificial shortwave object
@@ -142,14 +129,14 @@ artificial_shortwave <- tibble(
 shortwave_radiation <- shortwave_radiation_initial |> 
   left_join(artificial_shortwave, by = "date_time") |>    # Join on date_time
   mutate(swradin_wm2 = ifelse(is.na(swradin_wm2), sw, swradin_wm2)) |>   # Fill missing values
-  select(-sw)  |> # Remove extra column
+  dplyr::select(-sw)  |> # Remove extra column
   filter(swradin_wm2 > 0)
 
 
 ############### OUTGOING (UPWELLING) LONGWAVE RADIATION
 # select outgoing longwave radiation data from  Bonney Lake Glacier Met 
 outgoing_longwave_radiation_initial <- COHM |> 
-  select(metlocid, date_time, lwradout2_wm2)
+  dplyr::select(metlocid, date_time, lwradout2_wm2)
 
 # tried the ice surface temperature product, but the fit was way worse
 #artificial_longwave_out <- FRLM |> 
@@ -160,7 +147,7 @@ outgoing_longwave_radiation_initial <- COHM |>
 #  mutate(lwout = (epsilon*sigma*(surftemp_K^4)))
 
 artificial_longwave_out <- air_temperature |> 
-  select(date_time, airtemp_3m_K) |> 
+  dplyr::select(date_time, airtemp_3m_K) |> 
   mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.96)
 
 #ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
@@ -177,15 +164,12 @@ artificial_longwave_out <- air_temperature |>
 outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |> 
   left_join(artificial_longwave_out, by = "date_time") |>    # Join on date_time
   mutate(lwradout2_wm2 = ifelse(is.na(lwradout2_wm2), lwout, lwradout2_wm2)) |>   # Fill missing values
-  select(-lwout)  
-
-##ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) + 
-#  geom_line()
+  dplyr::select(-lwout)  
 
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
 incoming_longwave_radiation_initial <- COHM |> 
-  select(metlocid, date_time, lwradin2_wm2)
+  dplyr::select(metlocid, date_time, lwradin2_wm2)
 
 # Determine the last timestamp
 last_timestamp <- max(incoming_longwave_radiation_initial$date_time)
@@ -219,7 +203,7 @@ cloud_cover_df <- data.frame(date = daily_timestamps, cloud_cover = daily_cloud_
 artificial_longwave_in <- artificial_lw_in |> 
   mutate(date = as.Date(date_time)) |> 
   left_join(cloud_cover_df, by = "date") |> 
-  select(-date) |> # Remove the helper date column
+  dplyr::select(-date) |> # Remove the helper date column
   mutate(lwin = ((0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)*0.96)
 
 # incoming longwave looks pretty good (downwelling)
@@ -230,7 +214,7 @@ artificial_longwave_in <- artificial_lw_in |>
 incoming_longwave_radiation <- incoming_longwave_radiation_initial |> 
   left_join(artificial_longwave_in, by = "date_time") |>    # Join on date_time
   mutate(lwradin2_wm2 = ifelse(is.na(lwradin2_wm2), lwin, lwradin2_wm2)) |>   # Fill missing values
-  select(-lwin)   # Remove extra column 
+  dplyr::select(-lwin)   # Remove extra column 
 
 ggplot(incoming_longwave_radiation, aes(date_time, lwradin2_wm2)) + 
   geom_line()
@@ -238,18 +222,18 @@ ggplot(incoming_longwave_radiation, aes(date_time, lwradin2_wm2)) +
 # select air pressure data from Lake Hoare Met
 air_pressure = HOEM |> 
   mutate(bpress_Pa = bpress_mb*100) |>  # air pressure was initially in mbar, needs to be in Pascal. 
-  select(metlocid, date_time, bpress_Pa)
+  dplyr::select(metlocid, date_time, bpress_Pa)
 
 # select wind speed data from Lake Fryxell Met (backfilling with EXEM)
 wind_speed = FRLM |> 
-  select(metlocid, date_time, wspd_ms) |>  # wind speed is in meters per second
+  dplyr::select(metlocid, date_time, wspd_ms) |>  # wind speed is in meters per second
   mutate(wspd_ms = ifelse(is.na(wspd_ms), EXEM$wspd_ms, wspd_ms)) # fill in lost wind values from TARM, next nearest met station
 
 # load ice thickness data and manipulate for easier plotting
-ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv") |>
+ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv") |>
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
-  filter(lake == "Lake Fryxell") |> 
+  filter(location_name == "Lake Fryxell") |> 
   filter(date_time > "2016-12-01" & date_time < "2025-02-01")
 
 ############ ALBEDO CORRECTION ###########
@@ -293,7 +277,7 @@ ggplot(albedo1, aes(time, ice_abundance)) +
 
 # load relative humidity data
 relative_humidity <- FRLM |> 
-  select(metlocid, date_time, rhh2o_3m_pct, rhice_3m_pct) |> 
+  dplyr::select(metlocid, date_time, rhh2o_3m_pct, rhice_3m_pct) |> 
   mutate(rhh2o_3m_pct = ifelse(is.na(rhh2o_3m_pct), EXEM$rhh2o_3m_pct, rhh2o_3m_pct))
 
 ###################### Interpolate Data to match model time steps ######################
