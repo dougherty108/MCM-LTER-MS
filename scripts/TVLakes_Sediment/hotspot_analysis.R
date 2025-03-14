@@ -40,13 +40,13 @@ ggplot() +
   geom_raster(data = mean_df, aes(x = x, y = y, fill = sediment_mean)) +
   coord_sf() +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Hoare Hotspots", x = "Easting", y = "Northing") +
-  theme_linedraw() +
+  labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing") +
+  theme_linedraw(base_size = 20) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
-ggsave("plots/hotspot/lk_fryxell_hotspot.png", 
+ggsave("plots/hotspot/lk_bonney_hotspot.png", 
        dpi = 400)
 
 
