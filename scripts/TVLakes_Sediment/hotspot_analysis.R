@@ -17,7 +17,7 @@ setwd("~charliedougherty")
 tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250308"
 
 # Get list of all .tif files in the directory
-tif_files <- list.files(tif_dir, pattern = "LANDSAT_HOA.*\\.tif$", full.names = TRUE)
+tif_files <- list.files(tif_dir, pattern = "LANDSAT_FRY.*\\.tif$", full.names = TRUE)
 
 # Load only the first band of each raster
 raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[1]]))  # Adjust `[[1]]` to desired band index
@@ -31,21 +31,21 @@ mean_raster <- app(raster_stack, fun=mean, na.rm = F)
 # Save the output raster
 mean_df <- as.data.frame(mean_raster, xy = TRUE)
 
-colnames(mean_df)[3] = "ice_mean"
+colnames(mean_df)[3] = "sediment_mean"
 
 # Select color palette
-met_palette <- MetBrewer::met.brewer("Troy")
+met_palette <- MetBrewer::met.brewer("Hokusai2")
 
 ggplot() +
-  geom_raster(data = mean_df, aes(x = x, y = y, fill = ice_mean)) +
+  geom_raster(data = mean_df, aes(x = x, y = y, fill = sediment_mean)) +
   coord_sf() +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Hoare Hotspots", x = "Easting", y = "Northing") +
+  labs(title = "Lake Fryxell Hotspots", x = "Easting", y = "Northing") +
   theme_linedraw()
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
-ggsave("plots/hotspot/lk_hoare_hotspot.png", 
+ggsave("plots/hotspot/lk_bonney_hotspot.png", 
        dpi = 400)
 
 
