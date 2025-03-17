@@ -119,11 +119,6 @@ air_temp_gaps <- full_timestamps |>
 air_temperature <- air_temp_gaps |> 
   mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), wlbbb_airtemp$airtemp_3m_K, airtemp_3m_K))
 
-ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-  geom_path()
-
-#ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-#  geom_line()
 
 # select incoming shortwave radiation data from Lake Bonney Met and fill gaps
 # this shortwave object has gaps in the data. Fill the gaps with computed values
@@ -153,14 +148,6 @@ shortwave_radiation <- shortwave_radiation_initial |>
 # select outgoing longwave radiation data from  Bonney Lake Glacier Met 
 outgoing_longwave_radiation_initial <- COHM |> 
   select(metlocid, date_time, lwradout2_wm2)
-
-# tried the ice surface temperature product, but the fit was way worse
-#artificial_longwave_out <- BOYM |> 
-#  mutate(airtemp_1m_degc = ifelse(is.na(airtemp_1m_degc), HOEM$airtemp_1m_degc, airtemp_1m_degc)) |> 
-#  mutate(surftemp_K = (airtemp_1m_degc + 273.15)) |> 
-#  select(date_time, surftemp_K) |> 
-#  #mutate(surftemp_K = if_else(date_time > "2023-01-05 01:45:00", surftemp_K * 1.03, surftemp_K)) |> 
-#  mutate(lwout = (epsilon*sigma*(surftemp_K^4)))
 
 artificial_longwave_out <- air_temperature |> 
   select(date_time, airtemp_3m_K) |> 
@@ -213,7 +200,7 @@ daily_timestamps <- seq.Date(from = as.Date(min(artificial_lw_in$date_time)),
                              by = "day")
 
 # Generate random cloud cover values (one per day)
-daily_cloud_cover <- runif(length(daily_timestamps), min = 0.00, max = 1.00)
+daily_cloud_cover <- runif(length(daily_timestamps), min = 0.20, max = 1.00)
 
 # Create a cloud cover dataframe
 cloud_cover_df <- data.frame(date = daily_timestamps, cloud_cover = daily_cloud_cover)
@@ -223,11 +210,12 @@ artificial_longwave_in <- artificial_lw_in |>
   mutate(date = as.Date(date_time)) |> 
   left_join(cloud_cover_df, by = "date") |> 
   select(-date) |> # Remove the helper date column
-  mutate(lwin = (0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)
+  mutate(lwin = ((0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)*0.70)
+  #mutate(lwin = ((0.765 + 0.22*cloud_cover^3)*sigma*(COHM$surftemp_degc)^4))
 
 # incoming longwave looks pretty good (downwelling)
-ggplot(artificial_longwave_in, aes(date_time, lwin)) + 
-  geom_line()
+#ggplot(artificial_longwave_in, aes(date_time, lwin)) + 
+#  geom_line()
 
 #join to fill gaps
 incoming_longwave_radiation <- incoming_longwave_radiation_initial |> 
@@ -249,11 +237,11 @@ wind_speed = BOYM |>
   mutate(wspd_ms = ifelse(is.na(wspd_ms), TARM$wspd_ms, wspd_ms)) # fill in lost wind values from TARM, next nearest met station
 
 # load ice thickness data and manipulate for easier plotting
-ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv") |>
+ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2025.csv") |>
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
   filter(location_name == "East Lake Bonney") |> 
-  filter(date_time > "2016-12-01" & date_time < "2025-02-01")
+  filter(date_time > "2016-12-01" & date_time < "2024-02-01")
 
 ############ ALBEDO CORRECTION ###########
 # Read and prepare the data
@@ -290,9 +278,6 @@ albedo1 <- albedo1 |>
   arrange(time) |> 
   fill(ice_abundance, .direction = "down")
 
-#plot albedo
-ggplot(albedo1, aes(time, ice_abundance)) + 
-  geom_path()
 
 # load relative humidity data
 relative_humidity <- BOYM |> 
