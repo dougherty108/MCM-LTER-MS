@@ -408,6 +408,7 @@ results <- tibble(
   depth = numeric(n_iterations),             # Initialize `depth` as numeric
   temperature = numeric(n_iterations),       # Initialize `temperature` as numeric
   thickness = numeric(n_iterations),         # Initialize `thickness` as numeric
+  LW_net = numeric(n_iterations), 
   Iteration = numeric(n_iterations)          # Initialize `Iteration` as numeric
 )
 
@@ -435,6 +436,7 @@ for (t_idx in 1:nrow(time_series)) {
   results$depth[t_idx] <- depth
   results$temperature[t_idx] <- prevT
   results$thickness[t_idx] <- prevL
+  results$LW_net[t_idx] <- LW_net
   results$Iteration[t_idx] <- t_idx  
   
   #ice thickness
