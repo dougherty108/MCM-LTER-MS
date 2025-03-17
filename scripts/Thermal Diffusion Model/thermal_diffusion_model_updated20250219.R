@@ -132,13 +132,14 @@ shortwave_radiation_initial <- BOYM |>
 
 # create an artificial shortwave object
 # Coordinates of East Lobe Bonney Blue Box
-lat <- -77.13449
-lon <- 162.449716
+latitude <- -77.13449
+longitude <- 162.449716
 
 artificial_shortwave <- tibble(
   date_time = time_model, 
-  zenith = 90 - getSunlightPosition(time_model, lat, lon)$altitude, #convert to zenith by subtracting the altitude from 90 degrees. 
+  zenith = 90 - getSunlightPosition(time_model, lat = latitude, lon = longitude)$altitude, #convert to zenith by subtracting the altitude from 90 degrees. 
   sw = S*cos(zenith)*3.0)
+
 
 shortwave_radiation <- shortwave_radiation_initial |> 
   left_join(artificial_shortwave, by = "date_time") |>    # Join on date_time
@@ -255,7 +256,7 @@ ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.c
 
 ############ ALBEDO CORRECTION ###########
 # Read and prepare the data
-albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250301.csv") |>  
+albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250312.csv") |>  
   mutate(sediment = sediment_abundance) |> 
   filter(lake == "East Lake Bonney") |> 
   mutate(date = ymd(date), 
