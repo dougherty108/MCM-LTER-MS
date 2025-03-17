@@ -95,7 +95,8 @@ air_temperature <- read_csv("data/thermal diffusion model data/ice surface temp/
 
 wlbbb_airtemp <- read_csv('data/thermal diffusion model data/ice surface temp/air_temp_WLBBB.csv') |> 
   mutate(date_time = mdy_hm(date_time), 
-         airtemp_3m_K = surface_temp_C + 273.15)
+         airtemp_3m_K = surface_temp_C + 273.15) |> 
+  filter(date_time < "2023-11-01 00:00:00")
 
 ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
   geom_path()
@@ -291,7 +292,7 @@ albedo1 <- albedo1 |>
 
 #plot albedo
 ggplot(albedo1, aes(time, ice_abundance)) + 
-  geom_line()
+  geom_path()
 
 # load relative humidity data
 relative_humidity <- BOYM |> 
