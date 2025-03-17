@@ -566,9 +566,9 @@ results |>
   labs(x = "Time", y = "Ice Thickness (m)",
        title = "") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
-  theme_bw(base_size = 15)
+  theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_modeled.png", width = 9, height = 6, dpi = 700)
+ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_modeled_20250317.png", width = 9, height = 6, dpi = 700)
 
 #troubleshooting plots, to find distance of change at top and bottom
 plot(dL_bottom.vec)
@@ -581,8 +581,11 @@ ggplot(series, aes(time, data)) +
   facet_wrap(vars(variable), scales = "free") + 
   theme_minimal(base_size = 15)
 
+ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_input_20250317.png", 
+       width = 12, height = 8, dpi = 300)
+
 
 # save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250311.csv")
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250317.csv")
 
 ############## can check the outputs against actual ice thickness in Model_output_interrogation.R
