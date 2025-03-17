@@ -8,7 +8,9 @@ GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_o
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   mutate(time = ymd_hms(time)) |> 
-  filter(time < "2023-02-01")
+  filter(thickness > 0)
+
+summary(GEE_corrected$thickness)
 
 # ice thickness data
 ice_thick <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv") |>
@@ -34,7 +36,6 @@ ggsave("plots/manuscript/chapter 2/measured_vs_modeled.png",
 
 # sum model output to a daily average, to compare to measured ice thickness
 # goal here is to see how large the gap is between modeled data and measured data 
-
 modeled_daily <- GEE_corrected |> 
   mutate(time = ymd_hms(time), 
          date_time = date(time)) |> 
@@ -44,7 +45,13 @@ modeled_daily <- GEE_corrected |>
 
 ### join two datasets together to compare dates
 comp <- ice_thick |> 
-  left_join(modeled_daily, by = join_by(date_time))
+  left_join(modeled_daily, by = join_by(date_time)) |> 
+  group_by(date_time) |> 
+  mutate(difference = modeled_thickness - mean_thickness)
+
+summary(comp$mean_thickness)
+summary(comp$modeled_thickness)
+summary(comp$difference)
 
 #plot modeled and measured against each other
 ggplot(comp, aes(mean_thickness, modeled_thickness)) + 
