@@ -6,11 +6,16 @@ setwd("~/Google Drive/My Drive/MCMLTER_Met")
 # load files 
 DEM <- rast("output_be.tif") 
 plot(DEM, main = "Bonney + Hoare Basin") 
-filled_dem <- focal(DEM, w = matrix(1, 3, 3), fun = mean, na.policy = "only") 
-plot(filled_dem, main = "interpolated") 
+
+#filled_dem <- focal(DEM, w = matrix(1, 3, 3), fun = mean, na.policy = "only") 
+#plot(filled_dem, main = "interpolated") 
+
 slope <- terrain(DEM, v = "slope", unit = "degrees") 
 aspect <- terrain(DEM, v = "aspect", unit = "degrees") 
-plot(slope) plot(aspect) # Load Wind Data from Lake Bonney and Lake Hoare 
+plot(slope) 
+plot(aspect) 
+
+# Load Wind Data from Lake Bonney and Lake Hoare 
 
 BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_boym_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) 
@@ -28,12 +33,11 @@ calc_wind_alignment <- function(wind_dir, aspect_raster) {
 }
 
 # Example: Apply function for a given wind direction (e.g., 230°)
-wind_direction <- 230
+wind_direction <- 60
 wind_alignment <- calc_wind_alignment(wind_direction, aspect)
 
 # Plot wind alignment
 plot(wind_alignment, main = "Wind Alignment with Terrain")
-
 
 # Identify regions with sufficient wind speed (example: 12 m/s)
 wind_speed <- 12  # Example from station data
