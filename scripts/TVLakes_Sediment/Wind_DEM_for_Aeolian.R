@@ -13,12 +13,12 @@ bonney_basin = ext(4900, 16000, 29000, 36000)
 
 DEM = crop(DEM, bonney_basin)
 
-plot(DEM)
+#plot(DEM)
 
 slope <- terrain(DEM, v = "slope", unit = "degrees") 
 aspect <- terrain(DEM, v = "aspect", unit = "degrees") 
-plot(slope) 
-plot(aspect) 
+#plot(slope) 
+#plot(aspect) 
 
 # Load Wind Data from Lake Bonney and Lake Hoare 
 
@@ -30,16 +30,41 @@ BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
 wind_data <- BOYM %>%
   select(timestamp, wspd_ms, wspdmax_ms, wdir_deg) %>% 
   filter(
-    (timestamp < as.POSIXct("2022-03-18 18:00:00", tz = "UTC") & timestamp > as.POSIXct("2022-03-18 06:00:00", tz = "UTC")) |
-      (timestamp < as.POSIXct("2020-04-23 18:00:00", tz = "UTC") & timestamp > as.POSIXct("2020-04-22 18:00:00", tz = "UTC")) |
-      (timestamp < as.POSIXct("2020-04-15 23:59:00", tz = "UTC") & timestamp > as.POSIXct("2020-04-15 00:00:00", tz = "UTC"))
+    (timestamp < as.POSIXct("2022-03-18 18:00:00", tz = "NZ") & timestamp > as.POSIXct("2022-03-18 06:00:00", tz = "NZ")) |
+      (timestamp < as.POSIXct("2020-04-23 18:00:00", tz = "NZ") & timestamp > as.POSIXct("2020-04-22 18:00:00", tz = "NZ")) |
+      (timestamp < as.POSIXct("2020-04-15 23:59:00", tz = "NZ") & timestamp > as.POSIXct("2020-04-15 00:00:00", tz = "NZ"))
     ) %>% 
   pivot_longer(cols = c(wspd_ms, wspdmax_ms, wdir_deg), values_to = "wind", names_to = "measurement_type") %>% 
-  mutate(month = month(timestamp))
+  mutate(month = month(timestamp), 
+         week = week(timestamp))
 
-ggplot(wind_data, aes(timestamp, wind, color = "measurement_type")) + 
-  geom_point() + 
-  facet_wrap(vars(month), scales = "free")
+ggplot(wind_data, aes(timestamp, wind, color = measurement_type)) + 
+  geom_path() + 
+  facet_wrap(vars(month, week), scales = "free")
+
+
+
+# Adjust the wind speed values by dividing by 10 to match the scale of wind direction
+wind_data <- wind_data %>%
+  mutate(wind = ifelse(measurement_type %in% c("wspd_ms", "wspdmax_ms"), wind, wind))  # Adjust wind speed by factor of 10
+
+# Plot the data with wind direction on a different y-axis
+ggplot(wind_data, aes(x = timestamp, y = wind, color = measurement_type)) +
+  geom_path() +
+  facet_wrap(vars(month, week), scales = "free") +
+  scale_y_continuous(
+    name = "Wind Speed (m/s)",   # Left y-axis label for wind speed
+    sec.axis = sec_axis(~ ., name = "Wind Direction (°)")  # Right y-axis for wind direction (0-360)
+  ) +
+  theme_minimal() +
+  theme(
+    axis.title.y.left = element_text(color = "blue"),
+    axis.title.y.right = element_text(color = "red")
+  ) +
+  scale_color_manual(
+    values = c("wspd_ms" = "blue", "wspdmax_ms" = "darkblue", "wdir_deg" = "red")
+  ) +
+  labs(x = "Timestamp", color = "Measurement Type") 
 
 library(terra)
 
