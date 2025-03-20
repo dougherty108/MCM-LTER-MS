@@ -98,11 +98,11 @@ wlbbb_airtemp <- read_csv('data/thermal diffusion model data/ice surface temp/ai
          airtemp_3m_K = surface_temp_C + 273.15) |> 
   filter(date_time < "2023-11-01 00:00:00")
 
-ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
-  geom_path()
+#ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
+#  geom_path()
 
-ggplot(wlbbb_airtemp, aes(date_time, airtemp_3m_K)) + 
-  geom_path()
+#ggplot(wlbbb_airtemp, aes(date_time, airtemp_3m_K)) + 
+#  geom_path()
 
 #ggplot(air_temperature, aes(date_time, airtemp_3m_K)) + 
 #  geom_line()
@@ -153,8 +153,8 @@ artificial_longwave_out <- air_temperature |>
   select(date_time, airtemp_3m_K) |> 
   mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.92)
 
-ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
-  geom_path()
+#ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
+#  geom_path()
 
 #artificial_longwave_out <- BOYM |> 
 #  mutate(airtemp_1m_degc = ifelse(is.na(airtemp_1m_degc), HOEM$airtemp_1m_degc, airtemp_1m_degc)) |> # fill holes in 1m temp with HOEM data
@@ -169,8 +169,8 @@ outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |>
   mutate(lwradout2_wm2 = ifelse(is.na(lwradout2_wm2), lwout, lwradout2_wm2)) |>   # Fill missing values
   select(-lwout)  
 
-ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) + 
-  geom_line()
+#ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) + 
+#  geom_line()
 
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
@@ -373,9 +373,9 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 0.1402 + ((albedo_interp)*0.6775),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = (0.1402 + ((albedo_interp)*0.6775))*0.90,  # albedo, unitless (lower albedo value from measured BOYM data)
   #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
-  #albedo = albedo_interp,
+  #albedo = 0.8,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
   delta_T = T_air - lag(T_air),             # difference in air temperature, for later flux calculation
@@ -560,17 +560,72 @@ for (t_idx in 1:nrow(time_series)) {
 }
 
 ###################### plotting of results ######################
-results |> 
+#results_regular <- results
+plot_regular <- results_regular |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   ggplot(aes(x = time, y = thickness)) +
   geom_line(color = "red", size = 1) +
   labs(x = "Time", y = "Ice Thickness (m)",
-       title = "") +
+       title = "Tuned Model Output") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_modeled_20250317.png", width = 9, height = 6, dpi = 700)
+#ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_modeled_20250320_regular.png", width = 9, height = 6, dpi = 700)
+
+#results_lowered <- results
+plot_lowered <- results_lowered |> 
+  group_by(time) |> 
+  summarize(thickness = max(thickness)) |> 
+  ggplot(aes(x = time, y = thickness)) +
+  geom_line(color = "#324ca8", size = 1) +
+  labs(x = "Time", y = "Ice Thickness (m)",
+       title = "5% Decrease in Albedo") +
+  geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
+  theme_linedraw(base_size = 20)
+
+#results_raised <- results
+plot_raised <- results_raised |> 
+  group_by(time) |> 
+  summarize(thickness = max(thickness)) |> 
+  ggplot(aes(x = time, y = thickness)) +
+  geom_line(color = "#141313", size = 1) +
+  labs(x = "Time", y = "Ice Thickness (m)",
+       title = "5% Increase in Albedo") +
+  geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
+  theme_linedraw(base_size = 20)
+
+#results_static = results
+plot_static <- results_static |> 
+  group_by(time) |> 
+  summarize(thickness = max(thickness)) |> 
+  ggplot(aes(x = time, y = thickness)) +
+  geom_line(color = "#32a852", size = 1) +
+  labs(x = "Time", y = "Ice Thickness (m)",
+       title = "Static Albedo (0.8)") +
+  geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
+  theme_linedraw(base_size = 20)
+
+ggarrange(plot_regular, plot_static, plot_lowered, plot_raised)
+
+ggsave("plots/manuscript/chapter 2/ice_thickness_modeled_scenarios.png", 
+       width = 9, height = 9, dpi = 300)
+
+#results_lowest = results
+plot_lowest <- results_lowest |> 
+  group_by(time) |> 
+  summarize(thickness = max(thickness)) |> 
+  ggplot(aes(x = time, y = thickness)) +
+  geom_line(color = "#32a852", size = 1) +
+  labs(x = "Time", y = "Ice Thickness (m)",
+       title = "10% Decrease") +
+  geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
+  theme_linedraw(base_size = 20)
+
+ggarrange(plot_regular, plot_raised, plot_lowered, plot_lowest)
+
+ggsave("plots/manuscript/chapter 2/ice_thickness_modeled_scenarios_v2.png", 
+       width = 9, height = 9, dpi = 300)
 
 #troubleshooting plots, to find distance of change at top and bottom
 plot(dL_bottom.vec)
