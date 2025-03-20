@@ -26,9 +26,10 @@ BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
   mutate(date_time = ymd_hms(date_time), 
          timestamp = as.POSIXct(date_time))
 
-#filter wind data down to March 18, 2022 and April 22, 2020
+#filter wind data down to March 18, 2022 and April 22, 2020 and April 15, 2020
 wind_data <- BOYM %>%
   select(timestamp, wspd_ms, wspdmax_ms, wdir_deg) %>% 
+  mutate(wdir_deg = wdir_deg / 36) %>% 
   filter(
     (timestamp < as.POSIXct("2022-03-18 18:00:00", tz = "NZ") & timestamp > as.POSIXct("2022-03-18 06:00:00", tz = "NZ")) |
       (timestamp < as.POSIXct("2020-04-23 18:00:00", tz = "NZ") & timestamp > as.POSIXct("2020-04-22 18:00:00", tz = "NZ")) |
@@ -38,9 +39,9 @@ wind_data <- BOYM %>%
   mutate(month = month(timestamp), 
          week = week(timestamp))
 
-ggplot(wind_data, aes(timestamp, wind, color = measurement_type)) + 
-  geom_path() + 
-  facet_wrap(vars(month, week), scales = "free")
+#ggplot(wind_data, aes(timestamp, wind, color = measurement_type)) + 
+#  geom_path() + 
+#  facet_wrap(vars(month, week), scales = "free")
 
 
 
@@ -54,7 +55,7 @@ ggplot(wind_data, aes(x = timestamp, y = wind, color = measurement_type)) +
   facet_wrap(vars(month, week), scales = "free") +
   scale_y_continuous(
     name = "Wind Speed (m/s)",   # Left y-axis label for wind speed
-    sec.axis = sec_axis(~ ., name = "Wind Direction (°)")  # Right y-axis for wind direction (0-360)
+    sec.axis = sec_axis(~ .*36, name = "Wind Direction (°)")  # Right y-axis for wind direction (0-360)
   ) +
   theme_minimal() +
   theme(
@@ -65,6 +66,10 @@ ggplot(wind_data, aes(x = timestamp, y = wind, color = measurement_type)) +
     values = c("wspd_ms" = "blue", "wspdmax_ms" = "darkblue", "wdir_deg" = "red")
   ) +
   labs(x = "Timestamp", color = "Measurement Type") 
+
+
+
+
 
 library(terra)
 
