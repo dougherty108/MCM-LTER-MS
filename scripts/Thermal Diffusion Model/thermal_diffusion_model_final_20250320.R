@@ -255,6 +255,11 @@ albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundance
   #group_by(year, month) |> 
   #summarize(albedo_mean = (mean(sediment, na.rm = TRUE)))
 
+ggplot(albedo_orig, aes(date, ice_abundance)) + 
+  geom_point() + 
+  geom_path() + 
+  theme_linedraw()
+
 # Set the date as the first day of each month
 albedo_orig$date <- as.Date(paste(albedo_orig$year, albedo_orig$month, "01", sep = "-"))
 
@@ -373,7 +378,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = (0.1402 + ((albedo_interp)*0.6775))*0.90,  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = (0.1402 + ((albedo_interp)*0.6775)),  # albedo, unitless (lower albedo value from measured BOYM data)
   #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
   #albedo = 0.8,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
@@ -388,11 +393,15 @@ series <- time_series |>
   pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind, delta_T), 
                names_to = "variable", values_to = "data")
   
-#ggplot(series, aes(time, data)) + 
-##  geom_line() + 
-#  xlab("Date") + ylab("Value") +
-#  facet_wrap(vars(variable), scales = "free") + 
-#  theme_minimal()
+ggplot(series, aes(time, data)) + 
+  geom_line() + 
+  xlab("Date") + ylab("Parameter") +
+  facet_wrap(vars(variable), scales = "free") + 
+  theme_linedraw()
+
+setwd("~/Documents/R-Repositories/MCM-LTER-MS")
+ggsave(filename = "plots/manuscript/chapter 2/ice_model_input_data_20250320.png", 
+       width = 12, height = 8, dpi = 300)
 
 ###NOTES: The longwave estimations are still a mess. The SW gap fills looks pretty good to me, although there's 
 # pretty bad fit in 2023-2024. 
@@ -560,6 +569,18 @@ for (t_idx in 1:nrow(time_series)) {
 }
 
 ###################### plotting of results ######################
+results |> 
+  group_by(time) |> 
+  summarize(thickness = max(thickness)) |> 
+  ggplot(aes(x = time, y = thickness)) +
+  geom_line(color = "red", size = 1) +
+  labs(x = "Time", y = "Ice Thickness (m)",
+       title = "10% increase in Shortwave Radiation") +
+  geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
+  theme_linedraw(base_size = 20)
+
+ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_SWin_10.png", width = 9, height = 6, dpi = 300)
+
 #results_regular <- results
 plot_regular <- results_regular |> 
   group_by(time) |> 
@@ -637,9 +658,6 @@ ggplot(series, aes(time, data)) +
   xlab("Date") + ylab("Value") +
   facet_wrap(vars(variable), scales = "free") + 
   theme_minimal(base_size = 15)
-
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_input_20250317.png", 
-       width = 12, height = 8, dpi = 300)
 
 
 # save output to model outputs file, interrogation in different script
