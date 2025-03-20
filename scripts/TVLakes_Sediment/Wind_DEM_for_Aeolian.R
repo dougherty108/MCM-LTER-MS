@@ -7,8 +7,12 @@ setwd("~/Google Drive/My Drive/MCMLTER_Met")
 DEM <- rast("output_be.tif") 
 plot(DEM, main = "Bonney + Hoare Basin") 
 
-#filled_dem <- focal(DEM, w = matrix(1, 3, 3), fun = mean, na.policy = "only") 
-#plot(filled_dem, main = "interpolated") 
+#crop DEM to bonney basin
+bonney_basin = ext(4900, 16000, 29000, 36000)
+
+DEM = crop(DEM, bonney_basin)
+
+plot(DEM)
 
 slope <- terrain(DEM, v = "slope", unit = "degrees") 
 aspect <- terrain(DEM, v = "aspect", unit = "degrees") 
