@@ -2,6 +2,7 @@
 # load libraries 
 library(terra) 
 library(tidyverse) 
+library(viridis)
 setwd("~/Google Drive/My Drive/MCMLTER_Met") 
 # load files 
 DEM <- rast("output_be.tif") 
@@ -70,6 +71,8 @@ calc_wind_alignment <- function(wind_dir, aspect_raster) {
   
   # Compute alignment: cos(wind_direction - aspect)
   alignment <- cos((wind_dir_rast - aspect_raster) * pi / 180)
+  alignment[alignment <= 0.5] <- NA  
+  
   return(alignment)
 }
 
@@ -97,7 +100,7 @@ plot_wind_alignment <- function(wind_dir, aspect, lake_point, title) {
   arrow_y <- lake_y + arrow_length * sin(wind_rad)
   
   # Plot wind alignment raster
-  plot(wind_alignment_rast, main = title)
+  plot(wind_alignment_rast, col =viridis(100),  main = title)
   points(lake_x, lake_y, col = "red", pch = 19, cex = 1.5)
   
   # Add wind direction arrow
