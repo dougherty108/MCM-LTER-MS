@@ -30,59 +30,46 @@ BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
 wind_data <- BOYM %>%
   select(timestamp, wspd_ms, wspdmax_ms, wdir_deg) %>% 
   filter(
-    (timestamp < as.POSIXct("2022-03-18 18:00:00") & timestamp > as.POSIXct("2022-03-18 06:00:00")) |
-           (timestamp < as.POSIXct("2020-04-23 18:00:00") & timestamp > as.POSIXct("2020-04-22 18:00:00"))
+    (timestamp < as.POSIXct("2022-03-18 18:00:00", tz = "UTC") & timestamp > as.POSIXct("2022-03-18 06:00:00", tz = "UTC")) |
+      (timestamp < as.POSIXct("2020-04-23 18:00:00", tz = "UTC") & timestamp > as.POSIXct("2020-04-22 18:00:00", tz = "UTC")) |
+      (timestamp < as.POSIXct("2020-04-15 23:59:00", tz = "UTC") & timestamp > as.POSIXct("2020-04-15 00:00:00", tz = "UTC"))
     ) %>% 
-  #pivot_longer(cols = c(wspd_ms, wspdmax_ms, wdir_deg), values_to = "wind", names_to = "measurement_type") %>% 
+  pivot_longer(cols = c(wspd_ms, wspdmax_ms, wdir_deg), values_to = "wind", names_to = "measurement_type") %>% 
   mutate(month = month(timestamp))
 
-# plot data
-ggplot(wind_data, aes(timestamp, wind, color = measurement_type)) + 
-  geom_path() + 
+ggplot(wind_data, aes(timestamp, wind, color = "measurement_type")) + 
+  geom_point() + 
   facet_wrap(vars(month), scales = "free")
-
-# Create the plot
-ggplot(wind_data, aes(x = timestamp)) +
-  geom_line(aes(y = wspd_ms, color = "Wind Speed"), size = 1) +
-  geom_line(aes(y = wdir_deg / 36, color = "Wind Direction"), size = 1, linetype = "dashed") +
-  scale_y_continuous(
-    name = "Wind Speed (m/s)",  
-    sec.axis = sec_axis(~ . * 36, name = "Wind Direction (°)")  # Rescale wind direction back to 0-360
-  ) +
-  labs(x = "Timestamp", color = "Variable") +
-  theme_minimal() +
-  theme(
-    axis.title.y.left = element_text(color = "blue"),
-    axis.title.y.right = element_text(color = "red")
-  )  + 
-  facet_wrap(vars(month), scales = "free")
-  
-
 
 library(terra)
 
 # Define the lake point as a SpatVector (change x, y to real coordinates)
 lake_point <- vect(data.frame(x = 10500, y = 31800), geom = c("x", "y"), crs = crs(aspect))
 
-# Function to compute wind alignment
-calc_wind_alignment <- function(wind_dir, aspect_raster) {
-  wind_dir_rast <- rast(aspect_raster) # Convert wind direction to raster format
-  values(wind_dir_rast) <- wind_dir # Apply wind direction value
+# Function to compute wind alignment with slope for aeolian entrainment likelihood
+calc_wind_alignment_with_slope <- function(wind_dir, aspect_raster, slope_raster) {
+  wind_dir_rast <- rast(aspect_raster)  # Convert aspect to raster format
+  values(wind_dir_rast) <- wind_dir     # Apply wind direction value
   
-  # Compute alignment: cos(wind_direction - aspect)
+  # Compute wind alignment: cos(wind_direction - aspect)
   alignment <- cos((wind_dir_rast - aspect_raster) * pi / 180)
+  
+  # Filter: Keep values where alignment > 0.5, set others to NA
   alignment[alignment <= 0.5] <- NA  
   
-  return(alignment)
+  # Weight alignment by slope: Multiply alignment by slope values
+  entrainment_likelihood <- alignment * slope_raster
+  
+  return(entrainment_likelihood)
 }
 
-# Function to plot wind alignment and add arrow
-plot_wind_alignment <- function(wind_dir, aspect, lake_point, title) {
-  wind_alignment_rast <- calc_wind_alignment(wind_dir, aspect)
+# Function to plot wind alignment and add arrow, incorporating aeolian entrainment likelihood
+plot_wind_alignment_with_slope <- function(wind_dir, aspect, slope, lake_point, title) {
+  entrainment_rast <- calc_wind_alignment_with_slope(wind_dir, aspect, slope)
   
-  # Extract wind alignment value at the lake point
-  lake_alignment_value <- terra::extract(wind_alignment_rast, lake_point)
-  print(lake_alignment_value)
+  # Extract aeolian entrainment likelihood value at the lake point
+  lake_entrainment_value <- terra::extract(entrainment_rast, lake_point)
+  print(lake_entrainment_value)
   
   # Convert SpatVector to numeric coordinates for plotting
   lake_coords <- as.data.frame(geom(lake_point))
@@ -99,30 +86,36 @@ plot_wind_alignment <- function(wind_dir, aspect, lake_point, title) {
   arrow_x <- lake_x + arrow_length * cos(wind_rad)
   arrow_y <- lake_y + arrow_length * sin(wind_rad)
   
-  # Plot wind alignment raster
-  plot(wind_alignment_rast, col =viridis(100),  main = title)
+  # Plot the entrainment likelihood raster
+  plot(entrainment_rast, col = viridis(100), main = title)
   points(lake_x, lake_y, col = "red", pch = 19, cex = 1.5)
   
   # Add wind direction arrow
   arrows(lake_x, lake_y, arrow_x, arrow_y, col = "blue", lwd = 2, length = 0.15)
 }
 
+
+
 # Plot for 70-degree wind
-plot_wind_alignment(70, aspect, lake_point, "70-degree wind")
+plot_wind_alignment_with_slope(70, aspect, slope, lake_point, "70-degree wind")
 
 # Plot for 80-degree wind
-plot_wind_alignment(80, aspect, lake_point, "80-degree wind")
+plot_wind_alignment_with_slope(80, aspect, slope, lake_point, "80-degree wind")
+
 
 # Plot for 90-degree wind
-plot_wind_alignment(90, aspect, lake_point, "90-degree wind")
+plot_wind_alignment_with_slope(90, aspect, slope, lake_point, "90-degree wind")
+
 
 # Plot for 100-degree wind
-plot_wind_alignment(100, aspect, lake_point, "100-degree wind")
+plot_wind_alignment_with_slope(100, aspect, slope, lake_point, "100-degree wind")
 
 # Plot for 150-degree wind
-plot_wind_alignment(150, aspect, lake_point, "150-degree wind")
+plot_wind_alignment_with_slope(150, aspect, slope, lake_point, "150-degree wind")
+
+# Plot for 175-degree wind
+plot_wind_alignment_with_slope(175, aspect, slope, lake_point, "175-degree wind")
 
 
-# Plot for 230-degree wind
-plot_wind_alignment(230, aspect, lake_point, "230-degree wind")
+
 
