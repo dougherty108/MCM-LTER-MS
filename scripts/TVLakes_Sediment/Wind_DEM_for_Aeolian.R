@@ -110,6 +110,12 @@ plot_wind_alignment <- function(wind_dir, aspect, lake_point, title) {
 # Plot for 70-degree wind
 plot_wind_alignment(70, aspect, lake_point, "70-degree wind")
 
+# Plot for 70-degree wind
+plot_wind_alignment(70, aspect, lake_point, "150-degree wind")
+
+# Plot for 70-degree wind
+plot_wind_alignment(70, aspect, lake_point, "150-degree wind")
+
 # Plot for 230-degree wind
 plot_wind_alignment(230, aspect, lake_point, "230-degree wind")
 
