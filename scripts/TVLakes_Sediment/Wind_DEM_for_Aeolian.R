@@ -6,7 +6,7 @@ library(viridis)
 setwd("~/Google Drive/My Drive/MCMLTER_Met") 
 # load files 
 DEM <- rast("output_be.tif") 
-plot(DEM, main = "Bonney + Hoare Basin") 
+plot(DEM, col = viridis(1500), main = "Bonney + Hoare Basin") 
 
 #crop DEM to bonney basin
 bonney_basin = ext(4900, 16000, 29000, 36000)
@@ -36,6 +36,11 @@ wind_data <- BOYM %>%
       (timestamp < as.POSIXct("2020-04-15 23:59:00", tz = "NZ") & timestamp > as.POSIXct("2020-04-15 00:00:00", tz = "NZ"))
     ) %>% 
   pivot_longer(cols = c(wspd_ms, wspdmax_ms, wdir_deg), values_to = "wind", names_to = "measurement_type") %>% 
+  mutate(event_group = case_when(
+    between(timestamp, as.POSIXct("2022-03-18 06:00:00", tz = "NZ"), as.POSIXct("2022-03-18 18:00:00", tz = "NZ")) ~ "Event 1 (Mar 18, 2022)",
+    between(timestamp, as.POSIXct("2020-04-22 18:00:00", tz = "NZ"), as.POSIXct("2020-04-23 18:00:00", tz = "NZ")) ~ "Event 2 (Apr 22-23, 2020)",
+    between(timestamp, as.POSIXct("2020-04-15 00:00:00", tz = "NZ"), as.POSIXct("2020-04-15 23:59:00", tz = "NZ")) ~ "Event 3 (Apr 15, 2020)"
+  )) %>% 
   mutate(month = month(timestamp), 
          week = week(timestamp))
 
@@ -43,7 +48,7 @@ wind_data <- BOYM %>%
 #  geom_path() + 
 #  facet_wrap(vars(month, week), scales = "free")
 
-
+c("#E41A1CFF", "#377EB8FF", "#4DAF4AFF", "#984EA3FF", "#FF7F00FF", "#FFFF33FF", "#A65628FF", "#F781BFFF", "#999999FF")
 
 # Adjust the wind speed values by dividing by 10 to match the scale of wind direction
 wind_data <- wind_data %>%
@@ -51,24 +56,25 @@ wind_data <- wind_data %>%
 
 # Plot the data with wind direction on a different y-axis
 ggplot(wind_data, aes(x = timestamp, y = wind, color = measurement_type)) +
-  geom_path() +
-  facet_wrap(vars(month, week), scales = "free") +
+  geom_line(linewidth = 1.5) +
+  facet_wrap(vars(event_group), scales = "free") +
   scale_y_continuous(
     name = "Wind Speed (m/s)",   # Left y-axis label for wind speed
-    sec.axis = sec_axis(~ .*36, name = "Wind Direction (°)")  # Right y-axis for wind direction (0-360)
+    sec.axis = sec_axis(~ .*10, name = "Wind Direction (°)")  # Right y-axis for wind direction (0-360)
   ) +
-  theme_minimal() +
+  theme_linedraw() +
   theme(
-    axis.title.y.left = element_text(color = "blue"),
-    axis.title.y.right = element_text(color = "red")
+    axis.title.y.left = element_text(color = "#377EB8FF"),
+    axis.title.y.right = element_text(color = "#E41A1CFF")
   ) +
   scale_color_manual(
-    values = c("wspd_ms" = "blue", "wspdmax_ms" = "darkblue", "wdir_deg" = "red")
+    values = c("wspd_ms" = "#377EB8FF", "wspdmax_ms" = "darkblue", "wdir_deg" = "#E41A1CFF")
   ) +
   labs(x = "Timestamp", color = "Measurement Type") 
 
-
-
+setwd("~/Documents/R-Repositories/MCM-LTER-MS")
+ggsave("plots/manuscript/chapter 1/wind_events_wdir_wspd.png", 
+       width = 12, height = 8, dpi = 300)
 
 
 library(terra)
