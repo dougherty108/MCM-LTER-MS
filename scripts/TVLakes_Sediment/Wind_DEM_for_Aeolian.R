@@ -3,6 +3,49 @@
 library(terra) 
 library(tidyverse) 
 library(viridis)
+
+# Load Wind Data from Lake Bonney and Lake Hoare 
+
+BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_boym_15min-20250205.csv") |> 
+  mutate(date_time = ymd_hms(date_time), 
+         timestamp = as.POSIXct(date_time, tz = "Antarctica/McMurdo"))
+
+#filter wind data down to March 18, 2022 and April 22, 2020 and April 15, 2020
+wind_data <- BOYM %>%
+  select(timestamp, wspd_ms, wspdmax_ms, wdir_deg) %>% 
+  mutate(wdir_deg = wdir_deg/10) %>% 
+  filter(
+    (timestamp < as.POSIXct("2022-03-18 18:00:00", tz = "Antarctica/McMurdo") & timestamp > as.POSIXct("2022-03-18 06:00:00", tz = "Antarctica/McMurdo")) |
+      (timestamp < as.POSIXct("2020-04-23 18:00:00", tz = "Antarctica/McMurdo") & timestamp > as.POSIXct("2020-04-22 18:00:00", tz = "Antarctica/McMurdo")) |
+      (timestamp < as.POSIXct("2020-04-15 23:59:00", tz = "Antarctica/McMurdo") & timestamp > as.POSIXct("2020-04-15 00:00:00", tz = "Antarctica/McMurdo"))
+    ) %>% 
+ # pivot_longer(cols = c(wspd_ms, wspdmax_ms, wdir_deg), values_to = "wind", names_to = "measurement_type") %>% 
+  mutate(event_group = case_when(
+    between(timestamp, as.POSIXct("2022-03-18 06:00:00", tz = "Antarctica/McMurdo"), as.POSIXct("2022-03-18 18:00:00", tz = "Antarctica/McMurdo")) ~ "Sediment (Mar 18, 2022)",
+    between(timestamp, as.POSIXct("2020-04-15 00:00:00", tz = "Antarctica/McMurdo"), as.POSIXct("2020-04-15 23:59:00", tz = "Antarctica/McMurdo")) ~ "No Sediment (Apr 15, 2020)",
+    between(timestamp, as.POSIXct("2020-04-22 18:00:00", tz = "Antarctica/McMurdo"), as.POSIXct("2020-04-23 18:00:00", tz = "Antarctica/McMurdo")) ~ "Sediment (Apr 22-23, 2020)"
+  )) %>% 
+  mutate(month = month(timestamp), 
+         week = week(timestamp))
+
+ggplot(wind_data, aes(x = timestamp)) + 
+  geom_path(aes(y = wspd_ms), color = "#377EB8FF", linewidth = 1.5) + 
+  geom_path(aes(y = wspdmax_ms), color = "#4DAF4AFF", linewidth = 1.5) + 
+  geom_path(aes(y = wdir_deg), color = "#E41A1CFF", linewidth = 1.5) + 
+  scale_y_continuous(
+    name = "Wind Speed (m/s)",   # Left y-axis label for wind speed
+    sec.axis = sec_axis(~ .*10, name = "Wind Direction (°)")  # Right y-axis for wind direction (0-360)
+  ) +
+  facet_wrap(vars(event_group), scales = "free") + 
+  xlab("Timestamp") + 
+  theme_linedraw(base_size = 20) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+setwd("~/Documents/R-Repositories/MCM-LTER-MS")
+ggsave("plots/manuscript/chapter 1/wind_events_wdir_wspd.png", 
+       width = 16, height = 8, dpi = 300)
+
 setwd("~/Google Drive/My Drive/MCMLTER_Met") 
 # load files 
 DEM <- rast("output_be.tif") 
@@ -20,66 +63,6 @@ aspect <- terrain(DEM, v = "aspect", unit = "degrees")
 #plot(slope) 
 #plot(aspect) 
 
-# Load Wind Data from Lake Bonney and Lake Hoare 
-
-BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_boym_15min-20250205.csv") |> 
-  mutate(date_time = ymd_hms(date_time), 
-         timestamp = as.POSIXct(date_time, tz = "NZ"))
-
-#filter wind data down to March 18, 2022 and April 22, 2020 and April 15, 2020
-wind_data <- BOYM %>%
-  select(timestamp, wspd_ms, wspdmax_ms, wdir_deg) %>% 
-  mutate(wdir_deg = wdir_deg / 36) %>% 
-  filter(
-    (timestamp < as.POSIXct("2022-03-18 18:00:00", tz = "NZ") & timestamp > as.POSIXct("2022-03-18 06:00:00", tz = "NZ")) |
-      (timestamp < as.POSIXct("2020-04-23 18:00:00", tz = "NZ") & timestamp > as.POSIXct("2020-04-22 18:00:00", tz = "NZ")) |
-      (timestamp < as.POSIXct("2020-04-15 23:59:00", tz = "NZ") & timestamp > as.POSIXct("2020-04-15 00:00:00", tz = "NZ"))
-    ) %>% 
-  pivot_longer(cols = c(wspd_ms, wspdmax_ms, wdir_deg), values_to = "wind", names_to = "measurement_type") %>% 
-  mutate(event_group = case_when(
-    between(timestamp, as.POSIXct("2022-03-18 06:00:00", tz = "NZ"), as.POSIXct("2022-03-18 18:00:00", tz = "NZ")) ~ "Event 1 (Mar 18, 2022)",
-    between(timestamp, as.POSIXct("2020-04-15 00:00:00", tz = "NZ"), as.POSIXct("2020-04-15 23:59:00", tz = "NZ")) ~ "Event 2 (Apr 15, 2020)",
-    between(timestamp, as.POSIXct("2020-04-22 18:00:00", tz = "NZ"), as.POSIXct("2020-04-23 18:00:00", tz = "NZ")) ~ "Event 3 (Apr 22-23, 2020)"
-  )) %>% 
-  mutate(month = month(timestamp), 
-         week = week(timestamp))
-
-#ggplot(wind_data, aes(timestamp, wind, color = measurement_type)) + 
-#  geom_path() + 
-#  facet_wrap(vars(month, week), scales = "free")
-
-#c("#E41A1CFF", "#377EB8FF", "#4DAF4AFF", "#984EA3FF", "#FF7F00FF", "#FFFF33FF", "#A65628FF", "#F781BFFF", "#999999FF")
-
-# Adjust the wind speed values by dividing by 10 to match the scale of wind direction
-wind_data <- wind_data %>%
-  mutate(wind = ifelse(measurement_type %in% c("wspd_ms", "wspdmax_ms"), wind, wind))  # Adjust wind speed by factor of 10
-
-# Plot the data with wind direction on a different y-axis
-ggplot(wind_data, aes(x = timestamp, y = wind, color = measurement_type)) +
-  geom_line(linewidth = 1.5) +
-  facet_wrap(vars(event_group), scales = "free") +
-  scale_y_continuous(
-    name = "Wind Speed (m/s)",   # Left y-axis label for wind speed
-    sec.axis = sec_axis(~ .*10, name = "Wind Direction (°)")  # Right y-axis for wind direction (0-360)
-  ) +
-  theme_linedraw(base_size = 20) +
-  theme(
-    axis.title.y.left = element_text(color = "#377EB8FF"),
-    axis.title.y.right = element_text(color = "#E41A1CFF"), 
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  ) +
-  scale_color_manual(
-    values = c("wspd_ms" = "#377EB8FF", "wspdmax_ms" = "darkblue", "wdir_deg" = "#E41A1CFF")
-  ) +
-  labs(x = "Timestamp", color = "Measurement Type") 
-
-setwd("~/Documents/R-Repositories/MCM-LTER-MS")
-ggsave("plots/manuscript/chapter 1/wind_events_wdir_wspd.png", 
-       width = 16, height = 8, dpi = 300)
-
-
-library(terra)
-
 # Define the lake point as a SpatVector (change x, y to real coordinates)
 lake_point <- vect(data.frame(x = 10500, y = 31800), geom = c("x", "y"), crs = crs(aspect))
 
@@ -95,7 +78,7 @@ calc_wind_alignment_with_slope <- function(wind_dir, aspect_raster, slope_raster
   alignment[alignment <= 0.5] <- NA  
   
   # Weight alignment by slope: Multiply alignment by slope values
-  entrainment_likelihood <- alignment * slope_raster
+  entrainment_likelihood <- alignment #* slope_raster
   
   return(entrainment_likelihood)
 }
