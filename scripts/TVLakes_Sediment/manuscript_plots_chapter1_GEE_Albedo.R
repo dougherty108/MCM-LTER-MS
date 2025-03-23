@@ -105,15 +105,16 @@ ggsave("plots/manuscript/chapter 1/whole_lake_vs_BB_ice_abundance.png", dpi = 70
 
 
 ## load lake ice: 
-lakeice1 <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20230726 (1).csv") |> 
+lakeice1 <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2025.csv") |> 
   mutate(date_time = mdy_hm(date_time), 
          month = month(date_time), 
          year = year(date_time),
          year = as.numeric(year),
          z_water_m = z_water_m*-1) |> 
+  rename("lake" = location_name) |> 
   filter(lake == "Lake Fryxell" | lake == "Lake Hoare" | lake == "East Lake Bonney" | lake == "West Lake Bonney") |> 
   #filter(year >= 2016) |> 
-  filter(!grepl("^B", location_name))
+  filter(!grepl("^B", location))
 
 ggplot(lakeice1, aes(date_time, z_water_m)) + 
   geom_point() + 
@@ -129,12 +130,15 @@ ggplot(lakeice1, aes(date_time, z_water_m)) +
 
 lakeice = lakeice1 |> 
   filter(year >= 2017) |> 
-  mutate(season = sapply(date_time, get_season))
+  mutate(season = sapply(date_time, get_season)) |> 
+  filter(grepl("^I", location)) |> 
+  drop_na(z_water_m) |> 
+  mutate(z_water_m = z_water_m*-1)
 
 #FIND SEASONAL DROPOFF OF ICE THICKNESS
 seasonal_changes <- lakeice %>%
   group_by(season, lake) |> 
-  arrange(season, month) %>%
+  arrange(season, date_time) %>%
   summarise(
     First_Measurement = first(z_water_m*-1),
     Last_Measurement = last(z_water_m*-1),
