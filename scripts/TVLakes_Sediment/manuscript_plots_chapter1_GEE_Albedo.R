@@ -131,7 +131,8 @@ ggplot(lakeice1, aes(date_time, z_water_m)) +
 lakeice = lakeice1 |> 
   filter(year >= 2017) |> 
   mutate(season = sapply(date_time, get_season)) |> 
-  filter(grepl("^I", location)) |> 
+  filter(str_which(string = location, pattern = "Outside Hole (incubation hole)")) |> 
+  #filter(grepl("^O", location)) |> 
   drop_na(z_water_m) |> 
   mutate(z_water_m = z_water_m*-1)
 
