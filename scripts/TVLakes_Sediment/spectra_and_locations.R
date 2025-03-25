@@ -24,6 +24,7 @@ LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LB
   unnest_wider(brightest_band_means, names_sep = "_") %>%
   unnest_wider(dimmest_band_means, names_sep = "_") %>%
   unnest_wider(brightest_geometry, names_sep = "_") |> 
+  unnest_wider(dimmest_geometry, names_sep = "_") |> 
   rename(id = "system:index", 
          B2 = "brightest_band_means_1", 
          B3 = "brightest_band_means_2", 
@@ -46,7 +47,8 @@ LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LB
          B8 = "dimmest_band_means_7") |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "dimmest_band_names", 
                values_to = "dim_band_values") |> 
-  mutate(dim_band_values = as.numeric(dim_band_values))
+  mutate(dim_band_values = as.numeric(dim_band_values), 
+         lake = "Lake Bonney")
 
 
 bon_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
@@ -80,6 +82,7 @@ LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH
   unnest_wider(brightest_band_means, names_sep = "_") %>%
   unnest_wider(dimmest_band_means, names_sep = "_") %>%
   unnest_wider(brightest_geometry, names_sep = "_") |> 
+  unnest_wider(dimmest_geometry, names_sep = "_") |> 
   rename(id = "system:index", 
          B2 = "brightest_band_means_1", 
          B3 = "brightest_band_means_2", 
@@ -102,7 +105,8 @@ LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH
          B8 = "dimmest_band_means_7") |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "dimmest_band_names", 
                values_to = "dim_band_values") |> 
-  mutate(dim_band_values = as.numeric(dim_band_values))
+  mutate(dim_band_values = as.numeric(dim_band_values), 
+         lake = "Lake Hoare")
 
 
 hor_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
@@ -135,6 +139,7 @@ LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF
   unnest_wider(brightest_band_means, names_sep = "_") %>%
   unnest_wider(dimmest_band_means, names_sep = "_") %>%
   unnest_wider(brightest_geometry, names_sep = "_") |> 
+  unnest_wider(dimmest_geometry, names_sep = "_") |> 
   rename(id = "system:index", 
          B2 = "brightest_band_means_1", 
          B3 = "brightest_band_means_2", 
@@ -157,7 +162,8 @@ LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF
          B8 = "dimmest_band_means_7") |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "dimmest_band_names", 
                values_to = "dim_band_values") |> 
-  mutate(dim_band_values = as.numeric(dim_band_values))
+  mutate(dim_band_values = as.numeric(dim_band_values), 
+         lake = "Lake Fryxell")
 
 
 fry_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
@@ -178,5 +184,8 @@ ggsave("plots/manuscript/chapter 1/fryxell_spectra_comparison_values.png",
        height = 8, width = 14, dpi = 300)
 
 
+######### MAPS ###############
+all_lakes <- rbind(LB_spectra, LF_spectra, LH_spectra) |> 
+  select(-c(.geo, image_id))
 
-
+all_lakes_sf <- st_as_sf()
