@@ -3,6 +3,7 @@ library(tidyverse)
 library(ggpubr)
 library(RColorBrewer)
 library(lubridate)
+library(sf)
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
@@ -185,7 +186,32 @@ ggsave("plots/manuscript/chapter 1/fryxell_spectra_comparison_values.png",
 
 
 ######### MAPS ###############
-all_lakes <- rbind(LB_spectra, LF_spectra, LH_spectra) |> 
-  select(-c(.geo, image_id))
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
 
-all_lakes_sf <- st_as_sf()
+
+# Get the world map
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+# Filter for Antarctica
+antarctica <- world[world$continent == "Antarctica", ]
+
+
+all_lakes <- rbind(LB_spectra, LF_spectra, LH_spectra) |> 
+  select(-c(.geo, image_id)) |> 
+  mutate(brightest_lat = as.numeric(brightest_geometry_2), 
+         brightest_lon = as.numeric(brightest_geometry_1), 
+         dimmest_lat = as.numeric(dimmest_geometry_2), 
+         dimmest_lon = as.numeric(dimmest_geometry_1))
+
+ggplot() + 
+  geom_point(data = all_lakes, 
+             aes(x = brightest_lon, y = brightest_lat, color = lake), 
+             fill = "black",
+             size = 1.5) 
+
+ggplot() + 
+  geom_point(data = all_lakes, 
+             aes(x = dimmest_lon, y = dimmest_lat, color = lake),
+             size = 1.5)
