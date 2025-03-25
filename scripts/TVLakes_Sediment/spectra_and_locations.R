@@ -317,9 +317,30 @@ ggsave("plots/manuscript/chapter 1/alllakes_spectra_comparison_values_ice.png",
        height = 8, width = 16, dpi = 300)
 
 ### summary information ####
-all_summ <- all_lakes |> 
+dim_summ <- all_lakes |> 
+  group_by(lake, dimmest_band_names) |> 
+  summarize(mean_dim = mean(dim_band_values), 
+            min_dim = min(dim_band_values), 
+            max_dim = max(dim_band_values)) |> 
+  pivot_longer(cols = c(mean_dim, min_dim, max_dim), values_to = "summary_value", names_to = "summary_stat")
+
+ggplot(dim_summ, aes(dimmest_band_names, summary_value, fill = lake)) + 
+  geom_col() + 
+  facet_wrap(vars(summary_stat, lake)) + 
+  theme_linedraw()
+
+# 
+bright_summ <- all_lakes |> 
   group_by(lake, brightness_band_names) |> 
-  summary(bright_band_values)
+  summarize(mean_bright = mean(bright_band_values), 
+            min_bright = min(bright_band_values), 
+            max_bright = max(bright_band_values)) |> 
+  pivot_longer(cols = c(mean_bright, min_bright, max_bright), values_to = "summary_value", names_to = "summary_stat")
+
+ggplot(bright_summ, aes(brightness_band_names, summary_value, fill = lake)) + 
+  geom_col() + 
+  facet_wrap(vars(summary_stat, lake)) + 
+  theme_linedraw()
 
 ggplot() +
   # Add points
