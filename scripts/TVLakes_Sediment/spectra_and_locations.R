@@ -41,7 +41,7 @@ split_and_expand <- function(col) {
 }
 
 
-LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LB.csv") |> 
+LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LB_20250325.csv") |> 
   mutate(
     brightest_band_means = split_and_expand(brightest_band_means),
     dimmest_band_means = split_and_expand(dimmest_band_means),
@@ -121,7 +121,7 @@ ggsave("plots/manuscript/chapter 1/bonney_season_spectra_comparison_values_ice.p
        height = 8, width = 16, dpi = 300)
 
 # Lake Hoare
-LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH.csv") |> 
+LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH_20250325.csv") |> 
   mutate(
     brightest_band_means = split_and_expand(brightest_band_means),
     dimmest_band_means = split_and_expand(dimmest_band_means),
@@ -201,8 +201,8 @@ ggsave("plots/manuscript/chapter 1/hoare_season_spectra_comparison_values_ice.pn
        height = 8, width = 16, dpi = 300)
 
 
-# Lake Hoare
-LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF.csv") |> 
+# Lake Fryxell
+LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF_20250325.csv") |> 
   mutate(
     brightest_band_means = split_and_expand(brightest_band_means),
     dimmest_band_means = split_and_expand(dimmest_band_means),
@@ -241,19 +241,19 @@ LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF
          lake = "Lake Fryxell")
 
 
-fry_ice <- ggplot(LF_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
-  geom_path() + 
-  theme_linedraw(base_size=20) + 
-  scale_color_brewer(palette = "Set1") +
-  ggtitle("Lake Fryxell, Ice Endmember Values")
-
-fry_soil <- ggplot(LF_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
+fry_soil <- ggplot(LF_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
   geom_path() + 
   theme_linedraw(base_size=20) + 
   scale_color_brewer(palette = "Set1") +
   ggtitle("Lake Fryxell, Soil Endmember Values")
 
-ggarrange(fry_ice, fry_soil)
+fry_ice <- ggplot(LF_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
+  geom_path() + 
+  theme_linedraw(base_size=20) + 
+  scale_color_brewer(palette = "Set1") +
+  ggtitle("Lake Fryxell, Ice Endmember Values")
+
+ggarrange(fry_soil, fry_ice)
 
 ggsave("plots/manuscript/chapter 1/fryxell_spectra_comparison_values.png", 
        height = 8, width = 14, dpi = 300)
