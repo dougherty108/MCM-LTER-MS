@@ -316,6 +316,11 @@ ggplot(all_lakes, aes(date, bright_band_values, color = brightness_band_names)) 
 ggsave("plots/manuscript/chapter 1/alllakes_spectra_comparison_values_ice.png", 
        height = 8, width = 16, dpi = 300)
 
+### summary information ####
+all_summ <- all_lakes |> 
+  group_by(lake, brightness_band_names) |> 
+  summary(bright_band_values)
+
 ggplot() +
   # Add points
   geom_point(data = all_lakes, 
