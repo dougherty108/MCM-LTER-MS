@@ -7,6 +7,33 @@ library(sf)
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
+## Define a season function to plot data by season. Makes data viz a lot easier. 
+get_season <- function(date) {
+  month <- month(date)
+  year <- year(date)
+  
+  if (month %in% c(11, 12)) {
+    return(paste0("Summer ", year))  # November and December belong to the current winter
+  } else if (month == 1) {
+    return(paste0("Summer ", year - 1))  # January belongs to the previous winter
+  } else if (month == 2) {
+    return(paste0("Summer ", year - 1))  # February belongs to the previous winter
+  } else if (month == 3) {
+    return(paste0("Fall ", year))  # March is Spring
+  } else if (month %in% 4:5) {
+    return(paste0("Fall ", year))  # April and May are Spring
+  } else if (month == 6) {
+    return(paste0("Winter ", year))  # June is Summer
+  } else if (month %in% 7:8) {
+    return(paste0("Winter ", year))  # July and August are Summer
+  } else if (month == 9) {
+    return(paste0("Spring ", year))  # September is Fall
+  } else if (month %in% 10) {
+    return(paste0("Summer ", year))  # October is Fall
+  }
+}
+
+
 split_and_expand <- function(col) {
   col %>%
     str_replace_all("\\[|\\]", "") %>%   # Remove brackets
@@ -35,7 +62,8 @@ LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LB
          B7 = "brightest_band_means_6", 
          B8 = "brightest_band_means_7") |> 
   mutate(id = as.numeric(id), 
-         date = ymd(date)) |> 
+         date = ymd(date), 
+         season = sapply(date, get_season)) |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "brightness_band_names", 
                values_to = "bright_band_values") |> 
   mutate(bright_band_values = as.numeric(bright_band_values)) |> 
@@ -70,6 +98,27 @@ ggarrange(bon_ice, bon_soil)
 ggsave("plots/manuscript/chapter 1/bonney_spectra_comparison_values.png", 
        height = 8, width = 16, dpi = 300)
 
+# by season 
+ggplot(LB_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
+  geom_path() + 
+  facet_wrap(vars(season), scales = "free_x") + 
+  theme_linedraw(base_size = 20) + 
+  scale_color_brewer(palette = "Set1") + 
+  ggtitle("Bonney, by season")
+
+ggsave("plots/manuscript/chapter 1/bonney_season_spectra_comparison_values_soil.png", 
+       height = 8, width = 16, dpi = 300)
+
+# by season 
+ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
+  geom_path() + 
+  facet_wrap(vars(season), scales = "free_x") + 
+  theme_linedraw(base_size = 20) + 
+  scale_color_brewer(palette = "Set1") + 
+  ggtitle("Bonney, by season")
+
+ggsave("plots/manuscript/chapter 1/bonney_season_spectra_comparison_values_ice.png", 
+       height = 8, width = 16, dpi = 300)
 
 # Lake Hoare
 LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH.csv") |> 
@@ -93,7 +142,8 @@ LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH
          B7 = "brightest_band_means_6", 
          B8 = "brightest_band_means_7") |> 
   mutate(id = as.numeric(id), 
-         date = ymd(date)) |> 
+         date = ymd(date), 
+         season = sapply(date, get_season)) |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "brightness_band_names", 
                values_to = "bright_band_values") |> 
   mutate(bright_band_values = as.numeric(bright_band_values)) |> 
@@ -110,13 +160,13 @@ LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH
          lake = "Lake Hoare")
 
 
-hor_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
+hor_ice <- ggplot(LH_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
   geom_path() + 
   scale_color_brewer(palette = "Set1") + 
   theme_linedraw(base_size=20) + 
   ggtitle("Lake Hoare, Ice Endmember Values")
 
-hor_soil <- ggplot(LB_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
+hor_soil <- ggplot(LH_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
   geom_path() + 
   scale_color_brewer(palette = "Set1") +
   theme_linedraw(base_size=20) + 
@@ -126,6 +176,29 @@ ggarrange(hor_ice, hor_soil)
 
 ggsave("plots/manuscript/chapter 1/hoare_spectra_comparison_values.png", 
        height = 8, width = 14, dpi = 300)
+
+
+# by season 
+ggplot(LH_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
+  geom_path() + 
+  facet_wrap(vars(season), scales = "free_x") + 
+  theme_linedraw(base_size = 20) + 
+  scale_color_brewer(palette = "Set1") + 
+  ggtitle("Hoare, by season")
+
+ggsave("plots/manuscript/chapter 1/hoare_season_spectra_comparison_values_soil.png", 
+       height = 8, width = 16, dpi = 300)
+
+# by season 
+ggplot(LH_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
+  geom_path() + 
+  facet_wrap(vars(season), scales = "free_x") + 
+  theme_linedraw(base_size = 20) + 
+  scale_color_brewer(palette = "Set1") + 
+  ggtitle("Hoare, by season")
+
+ggsave("plots/manuscript/chapter 1/hoare_season_spectra_comparison_values_ice.png", 
+       height = 8, width = 16, dpi = 300)
 
 
 # Lake Hoare
@@ -150,7 +223,8 @@ LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF
          B7 = "brightest_band_means_6", 
          B8 = "brightest_band_means_7") |> 
   mutate(id = as.numeric(id), 
-         date = ymd(date)) |> 
+         date = ymd(date), 
+         season = sapply(date, get_season)) |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "brightness_band_names", 
                values_to = "bright_band_values") |> 
   mutate(bright_band_values = as.numeric(bright_band_values)) |> 
@@ -167,13 +241,13 @@ LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF
          lake = "Lake Fryxell")
 
 
-fry_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
+fry_ice <- ggplot(LF_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
   geom_path() + 
   theme_linedraw(base_size=20) + 
   scale_color_brewer(palette = "Set1") +
   ggtitle("Lake Fryxell, Ice Endmember Values")
 
-fry_soil <- ggplot(LB_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
+fry_soil <- ggplot(LF_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
   geom_path() + 
   theme_linedraw(base_size=20) + 
   scale_color_brewer(palette = "Set1") +
@@ -184,18 +258,34 @@ ggarrange(fry_ice, fry_soil)
 ggsave("plots/manuscript/chapter 1/fryxell_spectra_comparison_values.png", 
        height = 8, width = 14, dpi = 300)
 
+# by season 
+ggplot(LF_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
+  geom_path() + 
+  facet_wrap(vars(season), scales = "free_x") + 
+  theme_linedraw(base_size = 20) + 
+  scale_color_brewer(palette = "Set1") + 
+  ggtitle("Fryxell, by season")
+
+ggsave("plots/manuscript/chapter 1/fryxell_season_spectra_comparison_values_soil.png", 
+       height = 8, width = 16, dpi = 300)
+
+# by season 
+ggplot(LF_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
+  geom_path() + 
+  facet_wrap(vars(season), scales = "free_x") + 
+  theme_linedraw(base_size = 20) + 
+  scale_color_brewer(palette = "Set1") + 
+  ggtitle("Fryxell, by season")
+
+ggsave("plots/manuscript/chapter 1/fryxell_season_spectra_comparison_values_ice.png", 
+       height = 8, width = 16, dpi = 300)
+
 
 ######### MAPS ###############
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(sf)
-
-
-# Get the world map
-world <- ne_countries(scale = "medium", returnclass = "sf")
-
-# Filter for Antarctica
-antarctica <- world[world$continent == "Antarctica", ]
+library(ggmap)
 
 
 all_lakes <- rbind(LB_spectra, LF_spectra, LH_spectra) |> 
@@ -205,13 +295,46 @@ all_lakes <- rbind(LB_spectra, LF_spectra, LH_spectra) |>
          dimmest_lat = as.numeric(dimmest_geometry_2), 
          dimmest_lon = as.numeric(dimmest_geometry_1))
 
-ggplot() + 
-  geom_point(data = all_lakes, 
-             aes(x = brightest_lon, y = brightest_lat, color = lake), 
-             fill = "black",
-             size = 1.5) 
+#### make a plot by season of spectra
+ggplot(all_lakes, aes(date, dim_band_values, color = dimmest_band_names)) + 
+  geom_path() + 
+  facet_wrap(vars(lake)) + 
+  theme_linedraw(base_size=20) + 
+  scale_color_brewer(palette = "Set1") +
+  ggtitle("Soil Endmember Values")
 
-ggplot() + 
+ggsave("plots/manuscript/chapter 1/alllakes_spectra_comparison_values_soil.png", 
+       height = 8, width = 16, dpi = 300)
+  
+ggplot(all_lakes, aes(date, bright_band_values, color = brightness_band_names)) + 
+  geom_path() + 
+  facet_wrap(vars(lake)) + 
+  theme_linedraw(base_size=20) + 
+  scale_color_brewer(palette = "Set1") +
+  ggtitle("Ice Endmember Values")
+
+ggsave("plots/manuscript/chapter 1/alllakes_spectra_comparison_values_ice.png", 
+       height = 8, width = 16, dpi = 300)
+
+ggplot() +
+  # Add points
   geom_point(data = all_lakes, 
              aes(x = dimmest_lon, y = dimmest_lat, color = lake),
-             size = 1.5)
+             size = 1.5) +
+  
+  # Customize appearance
+  labs(title = "Dimmest_points",
+       x = "Longitude", y = "Latitude") +
+  theme_minimal()
+
+
+ggplot() +
+  # Add points
+  geom_point(data = all_lakes, 
+             aes(x = brightest_lon, y = brightest_lat, color = lake),
+             size = 1.5) +
+  
+  # Customize appearance
+  labs(title = "Brightest_points",
+       x = "Longitude", y = "Latitude") +
+  theme_minimal()
