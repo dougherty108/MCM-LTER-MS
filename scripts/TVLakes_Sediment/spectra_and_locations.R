@@ -1,6 +1,8 @@
 #### Spectra and location analysis ###
 library(tidyverse)
 library(ggpubr)
+library(RColorBrewer)
+library(lubridate)
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
@@ -30,7 +32,8 @@ LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LB
          B6 = "brightest_band_means_5", 
          B7 = "brightest_band_means_6", 
          B8 = "brightest_band_means_7") |> 
-  mutate(id = as.numeric(id)) |> 
+  mutate(id = as.numeric(id), 
+         date = ymd(date)) |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "brightness_band_names", 
                values_to = "bright_band_values") |> 
   mutate(bright_band_values = as.numeric(bright_band_values)) |> 
@@ -46,17 +49,20 @@ LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LB
   mutate(dim_band_values = as.numeric(dim_band_values))
 
 
-bon_ice <- ggplot(LB_spectra, aes(id, bright_band_values, color = brightness_band_names)) + 
+bon_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
   geom_path() + 
+  scale_color_brewer(palette = "Set1") + 
   theme_linedraw(base_size=20) + 
   ggtitle("Lake Bonney, Ice Endmember Values")
 
-bon_soil <- ggplot(LB_spectra, aes(id, dim_band_values, color = dimmest_band_names)) + 
+bon_soil <- ggplot(LB_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
   geom_path() + 
   theme_linedraw(base_size=20) + 
+  scale_color_brewer(palette = "Set1") + 
   ggtitle("Lake Bonney, Soil Endmember Values")
 
 ggarrange(bon_ice, bon_soil)
+
 
 ggsave("plots/manuscript/chapter 1/bonney_spectra_comparison_values.png", 
        height = 8, width = 16, dpi = 300)
@@ -82,7 +88,8 @@ LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH
          B6 = "brightest_band_means_5", 
          B7 = "brightest_band_means_6", 
          B8 = "brightest_band_means_7") |> 
-  mutate(id = as.numeric(id)) |> 
+  mutate(id = as.numeric(id), 
+         date = ymd(date)) |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "brightness_band_names", 
                values_to = "bright_band_values") |> 
   mutate(bright_band_values = as.numeric(bright_band_values)) |> 
@@ -98,13 +105,15 @@ LH_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LH
   mutate(dim_band_values = as.numeric(dim_band_values))
 
 
-hor_ice <- ggplot(LB_spectra, aes(id, bright_band_values, color = brightness_band_names)) + 
+hor_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
   geom_path() + 
+  scale_color_brewer(palette = "Set1") + 
   theme_linedraw(base_size=20) + 
   ggtitle("Lake Hoare, Ice Endmember Values")
 
-hor_soil <- ggplot(LB_spectra, aes(id, dim_band_values, color = dimmest_band_names)) + 
+hor_soil <- ggplot(LB_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
   geom_path() + 
+  scale_color_brewer(palette = "Set1") +
   theme_linedraw(base_size=20) + 
   ggtitle("Lake Hoare, Soil Endmember Values")
 
@@ -134,7 +143,8 @@ LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF
          B6 = "brightest_band_means_5", 
          B7 = "brightest_band_means_6", 
          B8 = "brightest_band_means_7") |> 
-  mutate(id = as.numeric(id)) |> 
+  mutate(id = as.numeric(id), 
+         date = ymd(date)) |> 
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "brightness_band_names", 
                values_to = "bright_band_values") |> 
   mutate(bright_band_values = as.numeric(bright_band_values)) |> 
@@ -150,19 +160,23 @@ LF_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF
   mutate(dim_band_values = as.numeric(dim_band_values))
 
 
-fry_ice <- ggplot(LB_spectra, aes(id, bright_band_values, color = brightness_band_names)) + 
+fry_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
   geom_path() + 
   theme_linedraw(base_size=20) + 
+  scale_color_brewer(palette = "Set1") +
   ggtitle("Lake Fryxell, Ice Endmember Values")
 
-fry_soil <- ggplot(LB_spectra, aes(id, dim_band_values, color = dimmest_band_names)) + 
+fry_soil <- ggplot(LB_spectra, aes(date, dim_band_values, color = dimmest_band_names)) + 
   geom_path() + 
   theme_linedraw(base_size=20) + 
+  scale_color_brewer(palette = "Set1") +
   ggtitle("Lake Fryxell, Soil Endmember Values")
 
 ggarrange(fry_ice, fry_soil)
 
 ggsave("plots/manuscript/chapter 1/fryxell_spectra_comparison_values.png", 
        height = 8, width = 14, dpi = 300)
+
+
 
 
