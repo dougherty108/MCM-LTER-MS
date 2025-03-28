@@ -56,14 +56,14 @@ for (i in seq_along(files)) {
   print(i)  # Keep track of progress
 }
 
-output_corr <- output |> 
-  mutate(`Lake Fryxell` = 1-`Lake Fryxell`, 
-         `Lake Hoare` = 1-`Lake Hoare`)
+#output_corr <- output |> 
+#  mutate(`Lake Fryxell` = 1-`Lake Fryxell`, 
+#         `Lake Hoare` = 1-`Lake Hoare`)
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 # Transform and save output
-output_to_save <- output_corr |> 
+output_to_save <- output |> 
   pivot_longer(cols = c(`East Lake Bonney`, `Lake Hoare`, `Lake Fryxell`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |>
   drop_na() |> 
   mutate(date = ymd(date), 
@@ -71,7 +71,7 @@ output_to_save <- output_corr |>
          sediment_abundance = 1-sediment) |> 
   drop_na()
 
-write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250312.csv")
+write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250328.csv")
 
 # Plot results
 ggplot(output_to_save, aes(date, sediment_abundance)) + 

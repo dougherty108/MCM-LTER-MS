@@ -31,7 +31,7 @@ get_season <- function(date) {
   }
 }
 
-mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250312.csv") |> 
+mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250328.csv") |> 
   mutate(date = ymd(date), 
          type = 'lake_monitoring_station', 
          season = sapply(date, get_season))
@@ -47,7 +47,7 @@ ggplot(mean_BB, aes(date, sediment_abundance*100)) +
 ggsave("plots/manuscript/chapter 1/BB_sed_by_lake.png", dpi = 700, 
        height = 8, width = 12)
 
-mean_wholelake <- read_csv("data/sediment abundance data/LANDSAT_wholelake_mean_20250312.csv") |> 
+mean_wholelake <- read_csv("data/sediment abundance data/LANDSAT_wholelake_mean_20250328.csv") |> 
   mutate(date = ymd(date), 
          type = "whole_lake", 
          season = sapply(date, get_season))
@@ -133,11 +133,10 @@ lakeice = lakeice1 |>
   mutate(season = sapply(date_time, get_season)) |> 
   filter(str_detect(string = location, pattern = "incubation hole")) |> 
   #filter(grepl("^O", location)) |> 
-  drop_na(z_water_m) |> 
-  mutate(z_water_m = z_water_m*-1)
+  drop_na(z_water_m)
 
 #FIND SEASONAL DROPOFF OF ICE THICKNESS
-seasonal_changes <- lakeice %>%
+seasonal_changes <- lakeice1 %>%
   group_by(season, lake) |> 
   arrange(season, date_time) %>%
   summarise(
@@ -268,7 +267,7 @@ ggplot(peak_solar_week, aes(mean_sed, mean_thickness)) +
   xlab("Mean Sediment Abundance (%)") + ylab("Mean Ice Thickness (m)") + 
   theme_linedraw(base_size = 20)  
 
-ggsave("plots/manuscript/chapter 1/Peak_Solar_Comparison.png", 
+ggsave("plots/manuscript/chapter 1/Peak_Solar_Comparison_20250328.png", 
        width = 12, height = 8, dpi = 300)
 
 #### Create a dual panel plot where only the lake ice thickness from 2016-2024 to sediment abundannce
@@ -301,13 +300,13 @@ ggarrange(plot1, plot2)
 ggsave("plots/manuscript/chapter 1/sed_abundance_ice_thick_timeseries.png", 
        dpi = 300, height = 8, width = 12)
 
-ggplot() + 
-  geom_point(data = lakeice, aes(x = as.Date(date_time), y = z_water_m)) + 
-  geom_point(data = mean_BB, aes(x = date, y = sediment_abundance)) + 
-  facet_wrap(vars(lake)) + 
-  xlab("Date") + ylab("Ice thickness (m)") +
-  scale_color_brewer(palette = "Set1") +
-  theme_linedraw(base_size = 20) 
+#ggplot() + 
+#  geom_point(data = lakeice, aes(x = as.Date(date_time), y = z_water_m)) + 
+#  geom_point(data = mean_BB, aes(x = date, y = sediment_abundance)) + 
+##  facet_wrap(vars(lake)) + 
+#  xlab("Date") + ylab("Ice thickness (m)") +
+#  scale_color_brewer(palette = "Set1") +
+#  theme_linedraw(base_size = 20) 
 
 
 

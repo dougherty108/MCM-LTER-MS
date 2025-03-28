@@ -8,9 +8,9 @@ library(tidyverse)
 
 setwd("~charliedougherty")
 
-files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250312", pattern = ".tif", full.names = TRUE)
+files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250325", pattern = ".tif", full.names = TRUE)
 
-setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250301")
+setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
 
 # Predefine output tibble
 output <- tibble(
@@ -30,7 +30,7 @@ library(raster)
 library(dplyr)
 library(stringr)
 
-files <- list.files(path = "Google Drive/My Drive/EarthEngine/landsat/20250308", pattern = ".tif", full.names = TRUE)
+files <- list.files(path = "Google Drive/My Drive/EarthEngine/landsat/20250325", pattern = ".tif", full.names = TRUE)
 
 # Load and transform polygons
 lake_shapefiles <- list(
@@ -83,7 +83,7 @@ output_for_save <- output |>
          sediment_abundance = 1-sediment) |> 
   drop_na()
 
-write_csv(output_for_save, "Documents/R-Repositories/MCM-LTER-MS/data/sediment abundance data/LANDSAT_wholelake_mean_20250312.csv")
+write_csv(output_for_save, "Documents/R-Repositories/MCM-LTER-MS/data/sediment abundance data/LANDSAT_wholelake_mean_20250328.csv")
 
 # Plot results
 ggplot(output_to_save, aes(date, sediment_abundance)) + 
