@@ -5,7 +5,7 @@ library(lubridate)
 library(stars)
 library(MetBrewer)
 
-setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250308")
+setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
 files <- list.files(pattern = ".tif")
 
 # Select color palette
@@ -17,7 +17,7 @@ get_type <- function(filename) {
 }
 
 # Create output directories for each type
-output_base <- "~/Google Drive/My Drive/EarthEngine/plots/20250311"
+output_base <- "~/Google Drive/My Drive/EarthEngine/plots/20250328"
 dir.create(output_base, showWarnings = FALSE)
 
 types <- unique(na.omit(sapply(files, get_type)))
@@ -27,7 +27,7 @@ for (t in types) {
 
 # Loop to create and save plots
 for (i in 1:length(files)) {
-  setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250308")
+  setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
   
   raster_file <- raster(files[[i]])
   raster_df <- as.data.frame(raster_file, xy = TRUE) |> 
@@ -49,7 +49,7 @@ for (i in 1:length(files)) {
       labs(title = paste0(type, " - ", year), x = "Easting", y = "Northing") +
       theme_minimal()
     
-    setwd("~/Google Drive/My Drive/EarthEngine/plots/20250311")
+    setwd("~/Google Drive/My Drive/EarthEngine/plots/20250328")
     ggsave(filename = plot_path)
     print(paste0("Saved plot for ", type, " - ", year, " (", i, "/", length(files), ")"))
   }
