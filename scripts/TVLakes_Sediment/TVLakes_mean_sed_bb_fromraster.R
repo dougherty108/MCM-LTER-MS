@@ -5,9 +5,9 @@ library(tidyverse)
 
 setwd("~charliedougherty")
 
-files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250308", pattern = ".tif", full.names = TRUE)
+files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250325", pattern = ".tif", full.names = TRUE)
 
-setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250308")
+setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
 
 # Predefine output tibble
 output <- tibble(
