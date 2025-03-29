@@ -44,7 +44,6 @@ nx = L_initial/dx       # Number of spatial steps
 dt <-  1/24             # Time step for stability (in days)
 nt <- (1/dt)*7.0*365.   # Number of time steps
 
-
 sigma = 5.67e-8         # stefan boltzman constant
 R = 8.314462            # Universal gas constant kg⋅m^2⋅s^-2⋅K^-1⋅mol^-1
 Ma = 28.97              # Molecular Weight of Air kg/mol
@@ -57,7 +56,6 @@ Tf = 273.16             # Temperature of water freezing (K)
 xLv = 2.500e6           # Latent Heat of Evaporation (J/kg)
 xLf = 3.34e5            # Latent Heat of Fusion (J/kg)
 xLs = xLv + xLf         # Latent Heat of Sublimation
-
 
 k <- 2.3                # Thermal conductivity of ice (W/m/K)
 rho <- 917              # Density of ice (kg/m^3)
@@ -77,7 +75,7 @@ setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 orig_air_temperature <- BOYM |> 
   mutate(airtemp_3m_degc = ifelse(is.na(airtemp_3m_degc), HOEM$airtemp_3m_degc, airtemp_3m_degc)) |> 
   mutate(airtemp_3m_K = airtemp_3m_degc + 273.15) |> 
-    select(metlocid, date_time, airtemp_3m_K) 
+  dplyr::select(c(metlocid, date_time, airtemp_3m_K)) 
 
 #ggplot(orig_air_temperature, aes(date_time, airtemp_3m_K)) + 
 #  geom_line()
@@ -123,7 +121,7 @@ air_temperature <- air_temp_gaps |>
 # select incoming shortwave radiation data from Lake Bonney Met and fill gaps
 # this shortwave object has gaps in the data. Fill the gaps with computed values
 shortwave_radiation_initial <- BOYM |> 
-  select(metlocid, date_time, swradin_wm2) |> 
+  dplyr::select(metlocid, date_time, swradin_wm2) |> 
   mutate(swradin_wm2 = ifelse(is.na(swradin_wm2), TARM$swradin_wm2, swradin_wm2)) # replace empty shortwave data with TARM, nearest met station
 
 # create an artificial shortwave object
@@ -140,17 +138,17 @@ artificial_shortwave <- tibble(
 shortwave_radiation <- shortwave_radiation_initial |> 
   left_join(artificial_shortwave, by = "date_time") |>    # Join on date_time
   mutate(swradin_wm2 = ifelse(is.na(swradin_wm2), sw, swradin_wm2)) |>   # Fill missing values
-  select(-sw)  |> # Remove extra column
+  dplyr::select(-sw)  |> # Remove extra column
   filter(swradin_wm2 > 0)
 
 
 ############### OUTGOING (UPWELLING) LONGWAVE RADIATION
 # select outgoing longwave radiation data from  Bonney Lake Glacier Met 
 outgoing_longwave_radiation_initial <- COHM |> 
-  select(metlocid, date_time, lwradout2_wm2)
+  dplyr::select(metlocid, date_time, lwradout2_wm2)
 
 artificial_longwave_out <- air_temperature |> 
-  select(date_time, airtemp_3m_K) |> 
+  dplyr::select(date_time, airtemp_3m_K) |> 
   mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.92)
 
 #ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
@@ -167,7 +165,7 @@ artificial_longwave_out <- air_temperature |>
 outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |> 
   left_join(artificial_longwave_out, by = "date_time") |>    # Join on date_time
   mutate(lwradout2_wm2 = ifelse(is.na(lwradout2_wm2), lwout, lwradout2_wm2)) |>   # Fill missing values
-  select(-lwout)  
+  dplyr::select(-lwout)  
 
 #ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) + 
 #  geom_line()
@@ -175,7 +173,7 @@ outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |>
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
 incoming_longwave_radiation_initial <- COHM |> 
-  select(metlocid, date_time, lwradin2_wm2)
+  dplyr::select(metlocid, date_time, lwradin2_wm2)
 
 # Determine the last timestamp
 last_timestamp <- max(incoming_longwave_radiation_initial$date_time)
@@ -209,7 +207,7 @@ cloud_cover_df <- data.frame(date = daily_timestamps, cloud_cover = daily_cloud_
 artificial_longwave_in <- artificial_lw_in |> 
   mutate(date = as.Date(date_time)) |> 
   left_join(cloud_cover_df, by = "date") |> 
-  select(-date) |> # Remove the helper date column
+  dplyr::select(-date) |> # Remove the helper date column
   mutate(lwin = ((0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)*0.70)
   #mutate(lwin = ((0.765 + 0.22*cloud_cover^3)*sigma*(COHM$surftemp_degc)^4))
 
@@ -221,7 +219,7 @@ artificial_longwave_in <- artificial_lw_in |>
 incoming_longwave_radiation <- incoming_longwave_radiation_initial |> 
   left_join(artificial_longwave_in, by = "date_time") |>    # Join on date_time
   mutate(lwradin2_wm2 = ifelse(is.na(lwradin2_wm2), lwin, lwradin2_wm2)) |>   # Fill missing values
-  select(-lwin)   # Remove extra column 
+  dplyr::select(-lwin)   # Remove extra column 
 
 #ggplot(incoming_longwave_radiation, aes(date_time, lwradin2_wm2)) + 
 #  geom_line()
@@ -229,11 +227,11 @@ incoming_longwave_radiation <- incoming_longwave_radiation_initial |>
 # select air pressure data from Lake Hoare Met
 air_pressure = HOEM |> 
   mutate(bpress_Pa = bpress_mb*100) |>  # air pressure was initially in mbar, needs to be in Pascal. 
-  select(metlocid, date_time, bpress_Pa)
+  dplyr::select(metlocid, date_time, bpress_Pa)
 
 # select wind speed data from Lake Bonney Met
 wind_speed = BOYM |> 
-  select(metlocid, date_time, wspd_ms) |>  # wind speed is in meters per second
+  dplyr::select(metlocid, date_time, wspd_ms) |>  # wind speed is in meters per second
   mutate(wspd_ms = ifelse(is.na(wspd_ms), TARM$wspd_ms, wspd_ms)) # fill in lost wind values from TARM, next nearest met station
 
 # load ice thickness data and manipulate for easier plotting
@@ -245,7 +243,7 @@ ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2
 
 ############ ALBEDO CORRECTION ###########
 # Read and prepare the data
-albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250312.csv") |>  
+albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250328.csv") |>  
   mutate(sediment = sediment_abundance) |> 
   filter(lake == "East Lake Bonney") |> 
   mutate(date = ymd(date), 
@@ -286,7 +284,7 @@ albedo1 <- albedo1 |>
 
 # load relative humidity data
 relative_humidity <- BOYM |> 
-  select(metlocid, date_time, rhh2o_3m_pct, rhice_3m_pct) |> 
+  dplyr::select(metlocid, date_time, rhh2o_3m_pct, rhice_3m_pct) |> 
   mutate(rhh2o_3m_pct = ifelse(is.na(rhh2o_3m_pct), TARM$rhh2o_3m_pct, rhh2o_3m_pct))
 
 ###################### Interpolate Data to match model time steps ######################
@@ -378,7 +376,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = (0.1402 + ((albedo_interp)*0.6775)),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = (0.1402 + ((albedo_interp)*0.77)),  # albedo, unitless (lower albedo value from measured BOYM data)
   #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
   #albedo = 0.8,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
@@ -393,15 +391,15 @@ series <- time_series |>
   pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind, delta_T), 
                names_to = "variable", values_to = "data")
   
-ggplot(series, aes(time, data)) + 
-  geom_line() + 
-  xlab("Date") + ylab("Parameter") +
-  facet_wrap(vars(variable), scales = "free") + 
-  theme_linedraw()
+#ggplot(series, aes(time, data)) + 
+#  geom_line() + 
+#  xlab("Date") + ylab("Parameter") +
+#  facet_wrap(vars(variable), scales = "free") + 
+#  theme_linedraw()
 
-setwd("~/Documents/R-Repositories/MCM-LTER-MS")
-ggsave(filename = "plots/manuscript/chapter 2/ice_model_input_data_20250320.png", 
-       width = 12, height = 8, dpi = 300)
+#setwd("~/Documents/R-Repositories/MCM-LTER-MS")
+#ggsave(filename = "plots/manuscript/chapter 2/ice_model_input_data_20250320.png", 
+#       width = 12, height = 8, dpi = 300)
 
 ###NOTES: The longwave estimations are still a mess. The SW gap fills looks pretty good to me, although there's 
 # pretty bad fit in 2023-2024. 
@@ -575,11 +573,11 @@ results |>
   ggplot(aes(x = time, y = thickness)) +
   geom_line(color = "red", size = 1) +
   labs(x = "Time", y = "Ice Thickness (m)",
-       title = "10% increase in Shortwave Radiation") +
+       title = "Ice thickness") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_SWin_10.png", width = 9, height = 6, dpi = 300)
+ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250328.png", width = 9, height = 6, dpi = 300)
 
 #results_regular <- results
 plot_regular <- results_regular |> 
