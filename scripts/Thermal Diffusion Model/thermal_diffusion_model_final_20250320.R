@@ -32,6 +32,9 @@ COHM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
   mutate(date_time = ymd_hms(date_time)) |> 
   filter(date_time > '2016-12-21 00:00:00')
 
+COHM_lw <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_cohm_15min-20250205.csv") |> 
+  mutate(date_time = ymd_hms(date_time)) 
+
 TARM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_tarm_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
   filter(date_time > '2016-12-21 00:00:00') |> 
@@ -76,9 +79,6 @@ orig_air_temperature <- BOYM |>
   mutate(airtemp_3m_degc = ifelse(is.na(airtemp_3m_degc), HOEM$airtemp_3m_degc, airtemp_3m_degc)) |> 
   mutate(airtemp_3m_K = airtemp_3m_degc + 273.15) |> 
   dplyr::select(c(metlocid, date_time, airtemp_3m_K)) 
-
-#ggplot(orig_air_temperature, aes(date_time, airtemp_3m_K)) + 
-#  geom_line()
 
 # Define the start time based on the input data
 start_time <- min(orig_air_temperature$date_time)
@@ -173,7 +173,7 @@ outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |>
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
 incoming_longwave_radiation_initial <- COHM |> 
-  dplyr::select(metlocid, date_time, lwradin2_wm2)
+  dplyr::select(metlocid, date_time, lwradin2_wm2, lwradin_wm2)
 
 # Determine the last timestamp
 last_timestamp <- max(incoming_longwave_radiation_initial$date_time)
@@ -187,42 +187,39 @@ new_timestamps <- seq.POSIXt(from = last_timestamp + 15*60,
 new_df <- data.frame(date_time = new_timestamps)
 
 # Bind the old and new dataframes
-incoming_longwave_radiation_initial <- bind_rows(incoming_longwave_radiation_initial, new_df)
+incoming_longwave_radiation_initial <- bind_rows(incoming_longwave_radiation_initial, new_df) |> 
+  mutate(yday = yday(date_time), 
+         hour = hour(date_time))
 
-#using air temperature from Bonney Met (plug in gap filled Air Temperature)
-artificial_lw_in <- air_temperature
+# create an artificial dataset taking the historical mean of incoming longwave radiation on each day
+# and using that to gap fill instead of using the modeled data (bad data)
+annual_mean_incoming_longwave <- COHM |> 
+  select(metlocid, date_time, lwradin_wm2, lwradin2_wm2) |> 
+  mutate(yday = yday(date_time), 
+         j_day = julian(date_time), 
+         hour = hour(date_time), 
+         year = year(date_time)) |> 
+  group_by(yday, hour) |> 
+  summarize(mean_lwin = mean(lwradin_wm2, na.rm = T), 
+            mean_lwin2 = mean(lwradin2_wm2, na.rm = T))
 
-# Generate daily timestamps from the min to max timestamp in your dataframe
-daily_timestamps <- seq.Date(from = as.Date(min(artificial_lw_in$date_time)),
-                             to = as.Date(max(artificial_lw_in$date_time)),
-                             by = "day")
+#comparison of LW outputs ( i think we want to use the lwradin2)
+ggplot(annual_mean_incoming_longwave, aes(x = yday)) + 
+  geom_path(aes(y = mean_lwin), color = "red") + 
+  geom_path(aes(y = mean_lwin2), color = "blue") + 
+  theme_linedraw(base_size = 20)
 
-# Generate random cloud cover values (one per day)
-daily_cloud_cover <- runif(length(daily_timestamps), min = 0.20, max = 1.00)
-
-# Create a cloud cover dataframe
-cloud_cover_df <- data.frame(date = daily_timestamps, cloud_cover = daily_cloud_cover)
-
-# Add a date column to df_extended for joining
-artificial_longwave_in <- artificial_lw_in |> 
-  mutate(date = as.Date(date_time)) |> 
-  left_join(cloud_cover_df, by = "date") |> 
-  dplyr::select(-date) |> # Remove the helper date column
-  mutate(lwin = ((0.765 + 0.22*cloud_cover^3)*sigma*(airtemp_3m_K)^4)*0.70)
-  #mutate(lwin = ((0.765 + 0.22*cloud_cover^3)*sigma*(COHM$surftemp_degc)^4))
-
-# incoming longwave looks pretty good (downwelling)
-#ggplot(artificial_longwave_in, aes(date_time, lwin)) + 
-#  geom_line()
+# looks pretty good. need to fill in the na values with these (can probably do this by yday)
 
 #join to fill gaps
 incoming_longwave_radiation <- incoming_longwave_radiation_initial |> 
-  left_join(artificial_longwave_in, by = "date_time") |>    # Join on date_time
-  mutate(lwradin2_wm2 = ifelse(is.na(lwradin2_wm2), lwin, lwradin2_wm2)) |>   # Fill missing values
-  dplyr::select(-lwin)   # Remove extra column 
+  left_join(annual_mean_incoming_longwave) |>    # Join on date_time
+  mutate(lwradin2_wm2 = ifelse(is.na(lwradin2_wm2), mean_lwin2, lwradin2_wm2)) |>   # Fill missing values
+  dplyr::select(-c(mean_lwin2, mean_lwin))   # Remove extra column 
 
-#ggplot(incoming_longwave_radiation, aes(date_time, lwradin2_wm2)) + 
-#  geom_line()
+ggplot(incoming_longwave_radiation, aes(date_time, lwradin2_wm2)) + 
+  geom_line() + 
+  theme_linedraw()
 
 # select air pressure data from Lake Hoare Met
 air_pressure = HOEM |> 
@@ -249,13 +246,11 @@ albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundance
   mutate(date = ymd(date), 
          month = month(date), 
          year = year(date)) |> 
-  drop_na(sediment) #|> 
-  #group_by(year, month) |> 
-  #summarize(albedo_mean = (mean(sediment, na.rm = TRUE)))
+  drop_na(sediment)
 
 ggplot(albedo_orig, aes(date, ice_abundance)) + 
   geom_point() + 
-  geom_path() + 
+  #geom_path() + 
   theme_linedraw()
 
 # Set the date as the first day of each month
@@ -376,8 +371,8 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = (0.1402 + ((albedo_interp)*0.77)),  # albedo, unitless (lower albedo value from measured BOYM data)
-  #albedo = alb_altered,                    # Constant albedo (can be replaced with a time series if needed)
+  albedo = (0.14 + ((albedo_interp)*0.780)),  # albedo, unitless (lower albedo value from measured BOYM data)
+  #albedo = albedo_interp,                    # Constant albedo (can be replaced with a time series if needed)
   #albedo = 0.8,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
@@ -392,7 +387,7 @@ series <- time_series |>
                names_to = "variable", values_to = "data")
   
 #ggplot(series, aes(time, data)) + 
-#  geom_line() + 
+##  geom_line() + 
 #  xlab("Date") + ylab("Parameter") +
 #  facet_wrap(vars(variable), scales = "free") + 
 #  theme_linedraw()
@@ -571,7 +566,7 @@ results |>
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   ggplot(aes(x = time, y = thickness)) +
-  geom_line(color = "red", size = 1) +
+  geom_line(color = "darkgreen", size = 1) +
   labs(x = "Time", y = "Ice Thickness (m)",
        title = "Ice thickness") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
@@ -659,6 +654,6 @@ ggplot(series, aes(time, data)) +
 
 
 # save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250317.csv")
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250328.csv")
 
 ############## can check the outputs against actual ice thickness in Model_output_interrogation.R

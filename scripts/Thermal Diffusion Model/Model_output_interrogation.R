@@ -4,7 +4,7 @@ library(tidyverse)
 setwd("/Users/charliedougherty/Documents/R-Repositories/MCM-LTER-MS")
 
 # load file
-GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250317.csv") |> 
+GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250328.csv") |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   mutate(time = ymd_hms(time)) |> 
@@ -21,6 +21,8 @@ ice_thick <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv")
   filter(date_time > "2016-12-01" & date_time < "2025-02-01") |> 
   group_by(date_time) |> 
   summarize(mean_thickness = mean(z_water_m, na.rm = T))
+
+summary(ice_thick$mean_thickness)
 
 # plot modeled ice thickness against the measured thickness
 ggplot() + 
