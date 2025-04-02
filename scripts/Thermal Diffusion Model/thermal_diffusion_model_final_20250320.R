@@ -371,7 +371,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = (0.14 + ((albedo_interp)*0.780)),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = (0.14 + ((albedo_interp)*0.765)),  # albedo, unitless (lower albedo value from measured BOYM data)
   #albedo = albedo_interp,                    # Constant albedo (can be replaced with a time series if needed)
   #albedo = 0.8,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
@@ -654,6 +654,6 @@ ggplot(series, aes(time, data)) +
 
 
 # save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250328.csv")
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250402.csv")
 
 ############## can check the outputs against actual ice thickness in Model_output_interrogation.R

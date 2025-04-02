@@ -4,7 +4,7 @@ library(tidyverse)
 setwd("/Users/charliedougherty/Documents/R-Repositories/MCM-LTER-MS")
 
 # load file
-GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250328.csv") |> 
+GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250402.csv") |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   mutate(time = ymd_hms(time)) |> 
@@ -33,8 +33,8 @@ ggplot() +
           subtitle = "modeled vs. measured") +
   theme_linedraw(base_size = 20)
 
-ggsave("plots/manuscript/chapter 2/measured_vs_modeled.png", 
-       dpi = 300, height = 8, width = 12)
+#ggsave("plots/manuscript/chapter 2/measured_vs_modeled.png", 
+#       dpi = 300, height = 8, width = 12)
 
 # sum model output to a daily average, to compare to measured ice thickness
 # goal here is to see how large the gap is between modeled data and measured data 
@@ -62,8 +62,8 @@ ggplot(comp, aes(mean_thickness, modeled_thickness)) +
   xlab("Measured Ice Thickness") + ylab("Modeled Ice Thickness") + 
   theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
-       width = 8, height = 6, dpi = 700)
+#ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
+#       width = 8, height = 6, dpi = 700)
 
 linear_model = lm(modeled_thickness ~mean_thickness, data = comp)
 
