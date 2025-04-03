@@ -71,7 +71,7 @@ output_to_save <- output |>
          sediment_abundance = 1-sediment) |> 
   drop_na()
 
-write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250328.csv")
+write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250403.csv")
 
 # Plot results
 ggplot(output_to_save, aes(date, sediment_abundance)) + 
