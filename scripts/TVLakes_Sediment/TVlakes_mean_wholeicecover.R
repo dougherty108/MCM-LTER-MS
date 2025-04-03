@@ -83,16 +83,16 @@ output_for_save <- output |>
          sediment_abundance = 1-sediment) |> 
   drop_na()
 
-write_csv(output_for_save, "Documents/R-Repositories/MCM-LTER-MS/data/sediment abundance data/LANDSAT_wholelake_mean_20250328.csv")
+write_csv(output_for_save, "Documents/R-Repositories/MCM-LTER-MS/data/sediment abundance data/LANDSAT_wholelake_mean_20250403.csv")
 
 # Plot results
-ggplot(output_to_save, aes(date, sediment_abundance)) + 
+ggplot(output_for_save, aes(date, sediment_abundance)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
   ggtitle("Landsat") + 
   theme_minimal()
 
-ggplot(output_to_save, aes(date, ice_abundance)) + 
+ggplot(output_for_save, aes(date, ice_abundance)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
   ggtitle("Landsat") + 
