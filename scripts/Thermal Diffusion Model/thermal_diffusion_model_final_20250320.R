@@ -240,7 +240,7 @@ ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2
 
 ############ ALBEDO CORRECTION ###########
 # Read and prepare the data
-albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250328.csv") |>  
+albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250403.csv") |>  
   mutate(sediment = sediment_abundance) |> 
   filter(lake == "East Lake Bonney") |> 
   mutate(date = ymd(date), 
