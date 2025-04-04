@@ -10,11 +10,13 @@ library(terra)
 library(tidyverse)
 #library(raster)
 library(sf)
+library(ggpubr)
+library(ggspatial)
 
 setwd("~charliedougherty")
 
 # Set the directory containing .tif files
-tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250308"
+tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250325"
 
 # Get list of all .tif files in the directory
 tif_files <- list.files(tif_dir, pattern = "LANDSAT_BON.*\\.tif$", full.names = TRUE)
@@ -37,8 +39,8 @@ colnames(mean_df)[3] = "sediment_mean"
 
 mean_df2 <- mean_df |> 
   mutate(sediment_filter = sediment_mean, 
-         ice_mean = 1-sediment_mean) |> 
-  filter(sediment_filter < 0.99)
+         ice_mean = 1-sediment_mean) #|> 
+  #filter(sediment_filter < 0.99)
 
 # Select color palette
 met_palette <- MetBrewer::met.brewer("Derain")
@@ -49,6 +51,8 @@ bonney <- ggplot() +
   scale_fill_gradientn(colors = met_palette) +
   labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
+  scale_x_reverse() + 
+  scale_y_reverse() + 
   theme_linedraw(base_size = 15) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         #legend.position = "none"
@@ -64,15 +68,15 @@ ggsave("plots/hotspot/lk_bonney_hotspot.png",
 setwd("~charliedougherty")
 
 # Set the directory containing .tif files
-tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250308"
+tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250325"
 
 # Get list of all .tif files in the directory
 tif_files <- list.files(tif_dir, pattern = "LANDSAT_HOA.*\\.tif$", full.names = TRUE)
 
-tif_files = tif_files[tif_files != 'Google Drive/My Drive/EarthEngine/landsat/20250308/LANDSAT_HOA_unmix_mar12_2020-01-02.tif']
+#tif_files = tif_files[tif_files != 'Google Drive/My Drive/EarthEngine/landsat/20250325/LANDSAT_HOA_unmix_mar12_2020-01-02.tif']
 
 # Load only the first band of each raster
-raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[1]]))  # Adjust `[[1]]` to desired band index
+raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[2]]))  # Adjust `[[1]]` to desired band index
 
 # load shapefile of East Lake Bonney
 #eastlobe_outline <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/East Lake Bonney.kml")
@@ -94,6 +98,8 @@ hoare <- ggplot() +
   scale_fill_gradientn(colors = met_palette) +
   labs(title = "Lake Hoare Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
+  scale_x_reverse() + 
+  scale_y_reverse() +  
   theme_linedraw(base_size = 15) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none")
@@ -109,7 +115,7 @@ ggsave("plots/hotspot/lk_bonney_hotspot.png",
 setwd("~charliedougherty")
 
 # Set the directory containing .tif files
-tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250308"
+tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250325"
 
 # Get list of all .tif files in the directory
 tif_files <- list.files(tif_dir, pattern = "LANDSAT_FRY.*\\.tif$", full.names = TRUE)
@@ -117,7 +123,7 @@ tif_files <- list.files(tif_dir, pattern = "LANDSAT_FRY.*\\.tif$", full.names = 
 #tif_files = tif_files[tif_files != 'Google Drive/My Drive/EarthEngine/landsat/20250308/LANDSAT_HOA_unmix_mar12_2020-01-02.tif']
 
 # Load only the first band of each raster
-raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[1]]))  # Adjust `[[1]]` to desired band index
+raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[2]]))  # Adjust `[[1]]` to desired band index
 
 # Compute the mean across all layers (ignoring NA values)
 mean_raster <- app(raster_stack, fun=mean, na.rm = F)
@@ -127,8 +133,8 @@ mean_df <- as.data.frame(mean_raster, xy = TRUE)
 
 colnames(mean_df)[3] = "sediment_mean"
 
-mean_df2 <- mean_df |> 
-  filter(sediment_mean > 0.02 )
+mean_df2 <- mean_df #|> 
+  #filter(sediment_mean > 0.02 )
 
 # Select color palette
 met_palette <- MetBrewer::met.brewer("Derain")
@@ -140,8 +146,8 @@ fryxell <- ggplot() +
   labs(title = "Lake Fryxell Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
   theme_linedraw(base_size = 15) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)#, 
-        #legend.position = "none"
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = "none"
         )
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
@@ -151,9 +157,18 @@ ggsave("plots/hotspot/lk_bonney_hotspot.png",
 
 
 # final plot
+bonney <- bonney +
+  annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
+
+hoare <- hoare +
+  annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
+
+fryxell <- fryxell +
+  annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
+
 
 ggarrange(bonney, hoare, fryxell, 
-          nrow = 1)
+          nrow = 1, widths = c(1, 1, 1))
 
 
 
