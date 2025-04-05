@@ -4,6 +4,7 @@ library(tidyverse)
 library(lubridate)
 library(stars)
 library(MetBrewer)
+library(RColorBrewer)
 
 setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
 files <- list.files(pattern = ".tif")
@@ -17,7 +18,7 @@ get_type <- function(filename) {
 }
 
 # Create output directories for each type
-output_base <- "~/Google Drive/My Drive/EarthEngine/plots/20250328"
+output_base <- "~/Google Drive/My Drive/EarthEngine/plots/final_manuscript_plots/Hokusai2"
 dir.create(output_base, showWarnings = FALSE)
 
 types <- unique(na.omit(sapply(files, get_type)))
@@ -46,10 +47,13 @@ for (i in 1:length(files)) {
       geom_raster(data = raster_df, aes(x = x, y = y, fill = sediment_abundance)) +
       coord_sf() +
       scale_fill_gradientn(colors = met_palette) +
+      #scale_fill_distiller(palette = "RdBu", direction = -1, na.value = "transparent") +
       labs(title = paste0(type, " - ", year), x = "Easting", y = "Northing") +
+      scale_x_reverse() + 
+      scale_y_reverse() + 
       theme_minimal()
     
-    setwd("~/Google Drive/My Drive/EarthEngine/plots/20250328")
+    setwd("~/Google Drive/My Drive/EarthEngine/plots/final_manuscript_plots/Hokusai2")
     ggsave(filename = plot_path)
     print(paste0("Saved plot for ", type, " - ", year, " (", i, "/", length(files), ")"))
   }
