@@ -35,7 +35,7 @@ mean_raster <- app(raster_stack, fun=mean, na.rm = F)
 # Save the output raster
 mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
   mutate(
-    #x = x*-1, 
+    x = x*-1, 
          y = y*-1)
 
 colnames(mean_df)[3] = "sediment_mean"
@@ -48,28 +48,28 @@ mean_df2 <- mean_df |>
 # Select color palette
 met_palette <- MetBrewer::met.brewer("Derain")
 
-ggplot() +
-  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (sediment_mean)*100)) +
-  coord_sf() +
+bonney <- ggplot() +
+  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (ice_mean)*100)) +
+  coord_fixed() +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing",
+  labs(title = "Lake Bonney", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
-  scale_x_reverse() + 
-  #scale_y_reverse() + 
-  theme_linedraw(base_size = 15) +
+  #scale_x_reverse(limits = c(408495, 401115)) + 
+  scale_y_reverse() + 
+  theme_linedraw(base_size = 20) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none"
         )
 
- dummy = ggplot() +
-  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (sediment_mean)*100)) +
-  coord_sf() +
+dummy <-  ggplot() +
+  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (ice_mean)*100)) +
+  coord_fixed() +
   scale_fill_gradientn(colors = met_palette) +
   labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
   #scale_x_reverse() + 
   scale_y_reverse() + 
-  theme_linedraw(base_size = 15) +
+  theme_linedraw(base_size = 20) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         #legend.position = "none"
   )
@@ -112,15 +112,16 @@ met_palette <- MetBrewer::met.brewer("Derain")
 
 hoare <- ggplot() +
   geom_raster(data = mean_df, aes(x = x, y = y, fill = (sediment_mean*100))) +
-  coord_sf() +
+  coord_fixed() +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Hoare Hotspots", x = "Easting", y = "Northing",
+  labs(title = "Lake Hoare", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
   scale_x_reverse() + 
   #scale_y_reverse() +  
-  theme_linedraw(base_size = 15) +
+  theme_linedraw(base_size = 20) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-        legend.position = "none")
+        legend.position = "none"
+        )
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
@@ -156,11 +157,11 @@ met_palette <- MetBrewer::met.brewer("Derain")
 
 fryxell <- ggplot() +
   geom_raster(data = mean_df, aes(x = x, y = y, fill = (sediment_mean*100))) +
-  coord_sf() +
+  coord_fixed() +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Fryxell Hotspots", x = "Easting", y = "Northing",
+  labs(title = "Lake Fryxell", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
-  theme_linedraw(base_size = 15) +
+  theme_linedraw(base_size = 20) +
   scale_x_reverse() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none"
@@ -173,19 +174,24 @@ setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 
 # final plot
-bonney <- bonney +
+bonney1 <- bonney +
   annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
 
-hoare <- hoare +
-  annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
+hoare1 <- hoare +
+  annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm")) 
 
-fryxell <- fryxell +
+fryxell1 <- fryxell +
   annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
 
 legend <- get_legend(dummy)
 
-ggarrange(bonney, hoare, fryxell, legend,
-          nrow = 1, widths = c(1, 1, 1))
+final_fig = ggarrange(bonney1, hoare1, fryxell1, legend,
+          nrow = 1#, widths = c(1, 1, 1)
+          )
+
+annotate_figure(final_fig,
+                top = text_grob("Hotspots", face = "bold.italic", size = 20, 
+                                y = -4.0))
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS/plots/manuscript/chapter 1")
 ggsave("hotpots_redone_foraxes.png", 
