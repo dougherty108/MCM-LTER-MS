@@ -34,7 +34,9 @@ mean_raster <- app(raster_stack, fun=mean, na.rm = F)
 
 # Save the output raster
 mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
-  mutate(x = x*-1)
+  mutate(
+    #x = x*-1, 
+         y = y*-1)
 
 colnames(mean_df)[3] = "sediment_mean"
 
@@ -46,21 +48,21 @@ mean_df2 <- mean_df |>
 # Select color palette
 met_palette <- MetBrewer::met.brewer("Derain")
 
-bonney <- ggplot() +
-  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (ice_mean)*100)) +
+ggplot() +
+  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (sediment_mean)*100)) +
   coord_sf() +
   scale_fill_gradientn(colors = met_palette) +
   labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
-  #scale_x_reverse() + 
-  scale_y_reverse() + 
+  scale_x_reverse() + 
+  #scale_y_reverse() + 
   theme_linedraw(base_size = 15) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none"
         )
 
-dummy = ggplot() +
-  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (ice_mean)*100)) +
+ dummy = ggplot() +
+  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (sediment_mean)*100)) +
   coord_sf() +
   scale_fill_gradientn(colors = met_palette) +
   labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing",
