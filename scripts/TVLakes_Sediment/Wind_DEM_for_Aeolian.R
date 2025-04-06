@@ -13,7 +13,7 @@ BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
 
 #filter wind data down to March 18, 2022 and April 22, 2020 and April 15, 2020
 wind_data <- BOYM %>%
-  select(timestamp, wspd_ms, wspdmax_ms, wdir_deg) %>% 
+  dplyr::select(timestamp, wspd_ms, wspdmax_ms, wdir_deg) %>% 
   mutate(wdir_deg = wdir_deg/10) %>% 
   filter(
     (timestamp < as.POSIXct("2022-03-18 18:00:00", tz = "Antarctica/McMurdo") & timestamp > as.POSIXct("2022-03-18 06:00:00", tz = "Antarctica/McMurdo")) |
@@ -38,12 +38,7 @@ ggplot(wind_data, aes(x = timestamp)) +
     sec.axis = sec_axis(~ .*10, name = "Wind Direction (°)")  # Right y-axis for wind direction (0-360)
   ) +
   facet_wrap(vars(event_group), scales = "free") +  
-  xlab("Timestamp") +  
-  theme_linedraw(base_size = 20) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "bottom"  # Adjust legend placement
-  ) +
+  xlab("Timestamp") +
   scale_color_manual(
     values = c(
       "Wind Speed (m/s)" = "#377EB8FF", 
@@ -52,6 +47,11 @@ ggplot(wind_data, aes(x = timestamp)) +
     ),
     name = "Legend",  # Legend title
     guide = guide_legend(override.aes = list(linewidth = 3))  # Make legend lines thicker for visibility
+  ) + 
+  theme_linedraw(base_size = 20) + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"  # Adjust legend placement
   )
 
 

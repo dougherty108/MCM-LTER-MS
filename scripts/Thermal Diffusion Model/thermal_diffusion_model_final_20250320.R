@@ -32,8 +32,8 @@ COHM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
   mutate(date_time = ymd_hms(date_time)) |> 
   filter(date_time > '2016-12-21 00:00:00')
 
-COHM_lw <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_cohm_15min-20250205.csv") |> 
-  mutate(date_time = ymd_hms(date_time)) 
+#COHM_lw <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_cohm_15min-20250205.csv") |> 
+#  mutate(date_time = ymd_hms(date_time)) 
 
 TARM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_tarm_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
@@ -194,7 +194,7 @@ incoming_longwave_radiation_initial <- bind_rows(incoming_longwave_radiation_ini
 # create an artificial dataset taking the historical mean of incoming longwave radiation on each day
 # and using that to gap fill instead of using the modeled data (bad data)
 annual_mean_incoming_longwave <- COHM |> 
-  select(metlocid, date_time, lwradin_wm2, lwradin2_wm2) |> 
+  dplyr::select(metlocid, date_time, lwradin_wm2, lwradin2_wm2) |> 
   mutate(yday = yday(date_time), 
          j_day = julian(date_time), 
          hour = hour(date_time), 
@@ -371,9 +371,9 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = (0.14 + ((albedo_interp)*0.765)),  # albedo, unitless (lower albedo value from measured BOYM data)
+  #albedo = (0.14 + ((albedo_interp)*0.705)),  # albedo, unitless (lower albedo value from measured BOYM data)
   #albedo = albedo_interp,                    # Constant albedo (can be replaced with a time series if needed)
-  #albedo = 0.8,
+  albedo = 0.8,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
   delta_T = T_air - lag(T_air),             # difference in air temperature, for later flux calculation
@@ -562,24 +562,25 @@ for (t_idx in 1:nrow(time_series)) {
 }
 
 ###################### plotting of results ######################
+results_static = results
 results |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   ggplot(aes(x = time, y = thickness)) +
   geom_line(color = "darkgreen", size = 1) +
-  labs(x = "Time", y = "Ice Thickness (m)",
-       title = "Ice thickness") +
+  labs(x = "Time", y = "Ice Thickness (m)"
+       ) +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250328.png", width = 9, height = 6, dpi = 300)
+ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250403.png", width = 9, height = 6, dpi = 300)
 
 #results_regular <- results
 plot_regular <- results_regular |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   ggplot(aes(x = time, y = thickness)) +
-  geom_line(color = "red", size = 1) +
+  geom_line(color = "darkgreen", size = 1) +
   labs(x = "Time", y = "Ice Thickness (m)",
        title = "Tuned Model Output") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
@@ -614,7 +615,7 @@ plot_static <- results_static |>
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   ggplot(aes(x = time, y = thickness)) +
-  geom_line(color = "#32a852", size = 1) +
+  geom_line(color = "#ede505", size = 1) +
   labs(x = "Time", y = "Ice Thickness (m)",
        title = "Static Albedo (0.8)") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
@@ -630,15 +631,15 @@ plot_lowest <- results_lowest |>
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   ggplot(aes(x = time, y = thickness)) +
-  geom_line(color = "#32a852", size = 1) +
+  geom_line(color = "red", size = 1) +
   labs(x = "Time", y = "Ice Thickness (m)",
        title = "10% Decrease") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
 
-ggarrange(plot_regular, plot_raised, plot_lowered, plot_lowest)
+ggarrange(plot_regular, plot_raised, plot_lowered, plot_lowest, plot_static)
 
-ggsave("plots/manuscript/chapter 2/ice_thickness_modeled_scenarios_v2.png", 
+ggsave("plots/manuscript/chapter 2/ice_thickness_modeled_scenarios_v3.png", 
        width = 9, height = 9, dpi = 300)
 
 #troubleshooting plots, to find distance of change at top and bottom
@@ -650,10 +651,10 @@ ggplot(series, aes(time, data)) +
   geom_line() + 
   xlab("Date") + ylab("Value") +
   facet_wrap(vars(variable), scales = "free") + 
-  theme_minimal(base_size = 15)
+  theme_minimal(base_size = 20)
 
 
 # save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250402.csv")
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250405.csv")
 
 ############## can check the outputs against actual ice thickness in Model_output_interrogation.R
