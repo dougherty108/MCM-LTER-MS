@@ -43,7 +43,7 @@ ggplot(mean_BB, aes(date, sediment_abundance*100, color = month)) +
   facet_wrap(vars(lake)) + 
   #scale_x_date(labels = date_format("%b"), breaks = "1 month") + 
   xlab("Date") + ylab("Sediment Abundance (%)") + 
-  scale_color_brewer(palette = "Set1") +
+  #scale_color_brewer(palette = "Set1") +
   theme_linedraw(base_size = 20)
 
 ggsave("plots/manuscript/chapter 1/BB_sed_by_lake.png", dpi = 700, 
@@ -53,7 +53,7 @@ mean_wholelake <- read_csv("data/sediment abundance data/LANDSAT_wholelake_mean_
   mutate(date = ymd(date), 
          type = "whole_lake", 
          season = sapply(date, get_season), 
-         month = month(date))
+         month = month(date, label = TRUE))
 
 # join the two files for easy comparison and plotting
 means <- rbind(mean_BB, mean_wholelake) |> 
@@ -66,6 +66,27 @@ means <- rbind(mean_BB, mean_wholelake) |>
 ggplot(means, aes(date, sediment_abundance, color = type)) + 
   geom_point() + 
   scale_color_brewer(palette = "Set1") 
+
+mean_bluebox = mean_BB |> 
+  mutate(sediment_abundance_bb = sediment_abundance) |> 
+  dplyr::select(c(date, lake, sediment_abundance_bb))
+
+mean_whole = mean_wholelake |> 
+  mutate(sediment_abundance_wholelake = sediment_abundance) |> 
+  dplyr::select(c(date, lake, sediment_abundance_wholelake))
+
+means_pivot = mean_bluebox |> 
+  full_join(mean_whole)
+
+ggplot(means_pivot, aes(sediment_abundance_bb, sediment_abundance_wholelake)) + 
+  geom_point(size = 2, shape = 1) + 
+  geom_abline(size = 2) +
+  coord_fixed() + 
+  xlab("Sediment estimate 300m buffered mean") + ylab("Sediment estimate whole lake mean") + 
+  theme_linedraw(base_size = 20)
+
+ggsave("plots/manuscript/chapter 1/wholelake_vs_bb.png", 
+       height = 8, width = 8, dpi = 300)
 
 #By season for just the lake monitoring site
 ggplot(mean_BB, aes(date, sediment_abundance*100, color = lake)) + 
@@ -418,3 +439,6 @@ ggplot(buffers, aes(date, sediment_abundance, color = buffer_distance)) +
 
 ggsave("plots/manuscript/chapter 1/comparison_of_buffer_distances_sed_byseason.png", dpi = 700, 
        height = 10, width = 10)
+
+
+

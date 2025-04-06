@@ -21,7 +21,7 @@ tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250325"
 # Get list of all .tif files in the directory
 tif_files <- list.files(tif_dir, pattern = "LANDSAT_BON.*\\.tif$", full.names = TRUE)
 
-tif_files = tif_files[tif_files != 'Google Drive/My Drive/EarthEngine/landsat/20250308/LANDSAT_BON_unmix_mar01_2016-12-13.tif']
+#tif_files = tif_files[tif_files != 'Google Drive/My Drive/EarthEngine/landsat/20250308/LANDSAT_BON_unmix_mar01_2016-12-13.tif']
 
 # Load only the first band of each raster
 raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[1]]))  # Adjust `[[1]]` to desired band index
@@ -33,7 +33,8 @@ raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[1]]))  # Adjust `[[1
 mean_raster <- app(raster_stack, fun=mean, na.rm = F)
 
 # Save the output raster
-mean_df <- as.data.frame(mean_raster, xy = TRUE)
+mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
+  mutate(x = x*-1)
 
 colnames(mean_df)[3] = "sediment_mean"
 
@@ -51,16 +52,30 @@ bonney <- ggplot() +
   scale_fill_gradientn(colors = met_palette) +
   labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
-  scale_x_reverse() + 
+  #scale_x_reverse() + 
+  scale_y_reverse() + 
+  theme_linedraw(base_size = 15) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = "none"
+        )
+
+dummy = ggplot() +
+  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (ice_mean)*100)) +
+  coord_sf() +
+  scale_fill_gradientn(colors = met_palette) +
+  labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing",
+       fill = "Sediment (%)") +
+  #scale_x_reverse() + 
   scale_y_reverse() + 
   theme_linedraw(base_size = 15) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         #legend.position = "none"
-        )
+  )
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 ggsave("plots/hotspot/lk_bonney_hotspot.png", 
+       plot = bonney,
        dpi = 400)
 
 ###### HOARE 
@@ -85,7 +100,8 @@ raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[2]]))  # Adjust `[[1
 mean_raster <- app(raster_stack, fun=mean, na.rm = F)
 
 # Save the output raster
-mean_df <- as.data.frame(mean_raster, xy = TRUE)
+mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
+  mutate(y = y*-1)
 
 colnames(mean_df)[3] = "sediment_mean"
 
@@ -99,7 +115,7 @@ hoare <- ggplot() +
   labs(title = "Lake Hoare Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
   scale_x_reverse() + 
-  scale_y_reverse() +  
+  #scale_y_reverse() +  
   theme_linedraw(base_size = 15) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none")
@@ -107,6 +123,7 @@ hoare <- ggplot() +
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 ggsave("plots/hotspot/lk_bonney_hotspot.png", 
+       plot = hoare,
        dpi = 400)
 
 
@@ -120,8 +137,6 @@ tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250325"
 # Get list of all .tif files in the directory
 tif_files <- list.files(tif_dir, pattern = "LANDSAT_FRY.*\\.tif$", full.names = TRUE)
 
-#tif_files = tif_files[tif_files != 'Google Drive/My Drive/EarthEngine/landsat/20250308/LANDSAT_HOA_unmix_mar12_2020-01-02.tif']
-
 # Load only the first band of each raster
 raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[2]]))  # Adjust `[[1]]` to desired band index
 
@@ -129,31 +144,30 @@ raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[2]]))  # Adjust `[[1
 mean_raster <- app(raster_stack, fun=mean, na.rm = F)
 
 # Save the output raster
-mean_df <- as.data.frame(mean_raster, xy = TRUE)
+mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
+  mutate(y = y*-1)
 
 colnames(mean_df)[3] = "sediment_mean"
-
-mean_df2 <- mean_df #|> 
-  #filter(sediment_mean > 0.02 )
 
 # Select color palette
 met_palette <- MetBrewer::met.brewer("Derain")
 
 fryxell <- ggplot() +
-  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (sediment_mean*100))) +
+  geom_raster(data = mean_df, aes(x = x, y = y, fill = (sediment_mean*100))) +
   coord_sf() +
   scale_fill_gradientn(colors = met_palette) +
   labs(title = "Lake Fryxell Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
   theme_linedraw(base_size = 15) +
+  scale_x_reverse() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none"
         )
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
-ggsave("plots/hotspot/lk_bonney_hotspot.png", 
-       plot = fryxell, dpi = 400)
+#ggsave("plots/hotspot/lk_bonney_hotspot.png", 
+#       plot = fryxell, dpi = 400)
 
 
 # final plot
@@ -166,12 +180,14 @@ hoare <- hoare +
 fryxell <- fryxell +
   annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
 
+legend <- get_legend(dummy)
 
-ggarrange(bonney, hoare, fryxell, 
+ggarrange(bonney, hoare, fryxell, legend,
           nrow = 1, widths = c(1, 1, 1))
 
-
-
+setwd("~/Documents/R-Repositories/MCM-LTER-MS/plots/manuscript/chapter 1")
+ggsave("hotpots_redone_foraxes.png", 
+       dpi = 300, height = 7, width = 14)
 
 
 
