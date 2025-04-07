@@ -32,9 +32,6 @@ COHM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_
   mutate(date_time = ymd_hms(date_time)) |> 
   filter(date_time > '2016-12-21 00:00:00')
 
-#COHM_lw <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_cohm_15min-20250205.csv") |> 
-#  mutate(date_time = ymd_hms(date_time)) 
-
 TARM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_tarm_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
   filter(date_time > '2016-12-21 00:00:00') |> 
@@ -45,7 +42,7 @@ L_initial <- 3.88       # Initial ice thickness (m) Ice thickness at 12/17/2015 
 dx <- 0.10              # Spatial step size (m)
 nx = L_initial/dx       # Number of spatial steps
 dt <-  1/24             # Time step for stability (in days)
-nt <- (1/dt)*7.0*365.   # Number of time steps
+nt <- (1/dt)*6.95*365.   # Number of time steps
 
 sigma = 5.67e-8         # stefan boltzman constant
 R = 8.314462            # Universal gas constant kg⋅m^2⋅s^-2⋅K^-1⋅mol^-1
@@ -124,6 +121,10 @@ shortwave_radiation_initial <- BOYM |>
   dplyr::select(metlocid, date_time, swradin_wm2) |> 
   mutate(swradin_wm2 = ifelse(is.na(swradin_wm2), TARM$swradin_wm2, swradin_wm2)) # replace empty shortwave data with TARM, nearest met station
 
+
+ggplot(shortwave_radiation_initial, aes(date_time, swradin_wm2)) + 
+  geom_path()
+
 # create an artificial shortwave object
 # Coordinates of East Lobe Bonney Blue Box
 latitude <- -77.13449
@@ -145,30 +146,44 @@ shortwave_radiation <- shortwave_radiation_initial |>
 ############### OUTGOING (UPWELLING) LONGWAVE RADIATION
 # select outgoing longwave radiation data from  Bonney Lake Glacier Met 
 outgoing_longwave_radiation_initial <- COHM |> 
-  dplyr::select(metlocid, date_time, lwradout2_wm2)
+  dplyr::select(metlocid, date_time, lwradout2_wm2) |> 
+  mutate(yday = yday(date_time), 
+         hour = hour(date_time))
 
-artificial_longwave_out <- air_temperature |> 
-  dplyr::select(date_time, airtemp_3m_K) |> 
-  mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.92)
+#artificial_longwave_out <- air_temperature |> 
+#  dplyr::select(date_time, airtemp_3m_K) |> 
+#  mutate(lwout = (epsilon*sigma*(airtemp_3m_K^4))*0.92)
 
-#ggplot(artificial_longwave_out, aes(date_time, lwout)) + 
-#  geom_path()
 
-#artificial_longwave_out <- BOYM |> 
-#  mutate(airtemp_1m_degc = ifelse(is.na(airtemp_1m_degc), HOEM$airtemp_1m_degc, airtemp_1m_degc)) |> # fill holes in 1m temp with HOEM data
-#  mutate(surftemp_K = (airtemp_1m_degc + 273.15)) |> 
-##  select(date_time, surftemp_K) |> 
-#  #mutate(surftemp_K = if_else(date_time > "2023-01-05 01:45:00", surftemp_K, surftemp_K), ) |> 
-#  mutate(lwout = (epsilon*sigma*(surftemp_K^4)))
+annual_mean_outgoing_longwave <- COHM |> 
+  dplyr::select(metlocid, date_time, lwradout_wm2, lwradout2_wm2) |> 
+  mutate(yday = yday(date_time), 
+         j_day = julian(date_time), 
+         hour = hour(date_time), 
+         year = year(date_time)) |> 
+  group_by(yday, hour) |> 
+  summarize(mean_lwout = mean(lwradout_wm2, na.rm = T), 
+            mean_lwout2 = mean(lwradout2_wm2, na.rm = T))
+
+#comparison of LW outputs ( i think we want to use the lwradin2)
+ggplot(annual_mean_outgoing_longwave, aes(x = yday)) + 
+  geom_path(aes(y = mean_lwout), color = "red") + 
+  geom_path(aes(y = mean_lwout2), color = "blue") + 
+  theme_linedraw(base_size = 20)
+
+outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |> 
+  left_join(annual_mean_outgoing_longwave) |>    # Join on date_time
+  mutate(lwradout2_wm2 = ifelse(is.na(lwradout2_wm2), mean_lwout2, lwradout2_wm2))  # Fill missing value
+
+
 
 #join datasets together to fill holes
-outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |> 
-  left_join(artificial_longwave_out, by = "date_time") |>    # Join on date_time
-  mutate(lwradout2_wm2 = ifelse(is.na(lwradout2_wm2), lwout, lwradout2_wm2)) |>   # Fill missing values
-  dplyr::select(-lwout)  
+#outgoing_longwave_radiation <- outgoing_longwave_radiation_initial |> 
+#  left_join(artificial_longwave_out, by = "date_time") |>    # Join on date_time
+#  mutate(lwradout2_wm2 = ifelse(is.na(lwradout2_wm2), lwout, lwradout2_wm2)) |>   # Fill missing values
+#  dplyr::select(-lwout)  
 
-#ggplot(outgoing_longwave_radiation, aes(date_time, lwradout2_wm2)) + 
-#  geom_line()
+
 
 ############# ################### INCOMING (DOWNWELLING) LONGWAVE RADIATION 
 # select incoming longwave radiation data from Commonwealth Glacier Met
@@ -236,7 +251,7 @@ ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
   filter(location_name == "East Lake Bonney") |> 
-  filter(date_time > "2016-12-01" & date_time < "2024-02-01")
+  filter(date_time > "2016-12-01" & date_time < "2024-04-01")
 
 ############ ALBEDO CORRECTION ###########
 # Read and prepare the data
@@ -247,11 +262,6 @@ albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundance
          month = month(date), 
          year = year(date)) |> 
   drop_na(sediment)
-
-ggplot(albedo_orig, aes(date, ice_abundance)) + 
-  geom_point() + 
-  #geom_path() + 
-  theme_linedraw()
 
 # Set the date as the first day of each month
 albedo_orig$date <- as.Date(paste(albedo_orig$year, albedo_orig$month, "01", sep = "-"))
@@ -371,9 +381,9 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  #albedo = (0.14 + ((albedo_interp)*0.705)),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = (0.14 + ((albedo_interp)*0.690)),  # albedo, unitless (lower albedo value from measured BOYM data)
   #albedo = albedo_interp,                    # Constant albedo (can be replaced with a time series if needed)
-  albedo = 0.8,
+  #albedo = 0.8,
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
   delta_T = T_air - lag(T_air),             # difference in air temperature, for later flux calculation
@@ -383,7 +393,7 @@ time_series <- tibble(
 
 # plot all input data together to do a visual check
 series <- time_series |> 
-  pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind, delta_T), 
+  pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind), 
                names_to = "variable", values_to = "data")
   
 #ggplot(series, aes(time, data)) + 
@@ -562,7 +572,6 @@ for (t_idx in 1:nrow(time_series)) {
 }
 
 ###################### plotting of results ######################
-results_static = results
 results |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
@@ -573,7 +582,27 @@ results |>
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250403.png", width = 9, height = 6, dpi = 300)
+eqqggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250407.png", width = 9, height = 6, dpi = 300)
+
+#troubleshooting plots, to find distance of change at top and bottom
+plot(dL_bottom.vec)
+plot(dL_surface.vec)
+
+# Plot of input ice data
+ggplot(series, aes(time, data)) + 
+  geom_line() + 
+  xlab("Date") + ylab("Value") +
+  facet_wrap(vars(variable), scales = "free") + 
+  theme_linedraw(base_size = 20)
+
+#save input data plot
+ggsave(filename = "plots/manuscript/chapter 2/model_input_data_20250406.png", 
+       height = 8, width = 12, dpi = 300)
+
+# save output to model outputs file, interrogation in different script
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250406.csv")
+
+
 
 #results_regular <- results
 plot_regular <- results_regular |> 
@@ -640,21 +669,10 @@ plot_lowest <- results_lowest |>
 ggarrange(plot_regular, plot_raised, plot_lowered, plot_lowest, plot_static)
 
 ggsave("plots/manuscript/chapter 2/ice_thickness_modeled_scenarios_v3.png", 
-       width = 9, height = 9, dpi = 300)
-
-#troubleshooting plots, to find distance of change at top and bottom
-plot(dL_bottom.vec)
-plot(dL_surface.vec)
-
-# Plot of input ice data
-ggplot(series, aes(time, data)) + 
-  geom_line() + 
-  xlab("Date") + ylab("Value") +
-  facet_wrap(vars(variable), scales = "free") + 
-  theme_minimal(base_size = 20)
+       width = 15, height = 7, dpi = 300)
 
 
 # save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250405.csv")
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250407.csv")
 
 ############## can check the outputs against actual ice thickness in Model_output_interrogation.R

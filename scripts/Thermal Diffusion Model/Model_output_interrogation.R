@@ -4,7 +4,7 @@ library(tidyverse)
 setwd("/Users/charliedougherty/Documents/R-Repositories/MCM-LTER-MS")
 
 # load file
-GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250405.csv") |> 
+GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250406.csv") |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   mutate(time = ymd_hms(time)) |> 
@@ -57,8 +57,8 @@ summary(comp$difference)
 
 #plot modeled and measured against each other
 ggplot(comp, aes(mean_thickness, modeled_thickness)) + 
-  geom_point() + 
-  geom_abline() + 
+  geom_point(size = 2.5, shape = 1) + 
+  geom_abline(size = 1.5) + 
   xlab("Measured Ice Thickness") + ylab("Modeled Ice Thickness") + 
   theme_linedraw(base_size = 20)
 
