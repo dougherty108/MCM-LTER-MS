@@ -142,17 +142,17 @@ lakeice1 <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2025.c
   filter(!grepl("^B", location))
 
 ggplot(lakeice1, aes(date_time, z_water_m)) + 
-  geom_point(aes(color = month)) + 
+  geom_point() + 
   geom_smooth(se = T) + 
   facet_wrap(vars(lake)) + 
   theme_linedraw(base_size = 15) + 
   #scale_color_brewer(palette = "Set1") +
   xlab("Date") + ylab("Ice Thickness (m)") + 
-  ggtitle("Ice thickness (m) 1993-2024", 
+  ggtitle("Ice thickness (m) 1989-2024", 
           subtitle = "ice to water measurement")
 
-#ggsave("plots/manuscript/chapter 1/ice_thickness_total_years.png", dpi = 700, 
-#       height = 8, width = 12)
+ggsave("plots/manuscript/chapter 1/ice_thickness_total_years.png", dpi = 700, 
+       height = 8, width = 12)
 
 lakeice = lakeice1 |> 
   filter(date_time >= "2016-05-01") |> 
@@ -200,18 +200,28 @@ fulljoined = full_join(sed_monthly, li_summary) |>
   filter(type == "lake_monitoring_station")
 
 ##### plot
-ggplot(fulljoined, aes(mean_sed, mean_thickness, color = month)) + 
+ggplot(fulljoined, aes(mean_sed, mean_thickness)) + 
   geom_smooth(method = "lm", se = F) + 
-  geom_point() + 
+  geom_point(aes(color = month), size = 3) + 
   facet_wrap(vars(lake), scales = "free") + 
-  ggtitle("October-February", 
-          subtitle = "whole lake average") + 
+  ggtitle("October-February") + 
   xlab("Mean Sediment Abundance (%)") + ylab("Mean Ice Thickness (m)") + 
   #scale_color_brewer(palette = "Set1") +
   theme_linedraw(base_size = 20) 
 
 ggsave("plots/manuscript/chapter 1/sed_vs_ice_thickness.png", 
        width = 12, height = 8, dpi = 300)
+
+all_data_lm = fulljoined |> 
+  group_by(lake) |> 
+  nest() |> 
+  mutate(
+    model = map(data, ~ lm(mean_sed ~mean_thickness, data = .x)),
+    tidied = map(model, broom::tidy)
+  )
+
+all_data_lm %>% select(lake, tidied) %>% unnest(tidied)
+
 
 ### now remove November and October Values
 #fulljoin_filter <- fulljoined |> 
@@ -231,16 +241,32 @@ ggsave("plots/manuscript/chapter 1/wholelakesed_vsthickness_jan.png",
        width = 12, height = 8, dpi = 300)
 
 # now filter for only early year estimates, October - December
-oct_dec_fulljoin <- fulljoined |> 
-  filter(month == "Jan" | month == "Dec")
+jan_dec_fulljoin <- fulljoined |> 
+  filter(
+    month == "Jan" | 
+      month == "Dec")
 
-ggplot(oct_dec_fulljoin, aes(mean_sed, mean_thickness)) + 
+ggplot(jan_dec_fulljoin, aes(mean_sed, mean_thickness)) + 
   geom_smooth(method = "lm", se = F) + 
   geom_point(aes(color = month)) + 
   facet_wrap(vars(lake), scales = "free") + 
-  ggtitle("November - December") + 
+  ggtitle("January - December") + 
   #scale_color_brewer(palette = "Set1") +
   theme_linedraw(base_size = 20) 
+
+jan_dec_lm = jan_dec_fulljoin |> 
+  group_by(lake) |> 
+  nest() |> 
+  mutate(
+    model = map(data, ~ lm(mean_sed ~ mean_thickness, data = .x)),
+    tidied = map(model, broom::tidy),
+    glanced = map(model, broom::glance)  # this adds R², adj R², etc.
+  )
+
+save = jan_dec_lm %>% select(lake, tidied, glanced) |> 
+  unnest(tidied, names_sep = "_coef") |> 
+  unnest(glanced, names_sep = "_model")
+
 
 jan_fulljoin <- fulljoined |> 
   filter(month == 1)
@@ -261,7 +287,8 @@ ggsave("plots/manuscript/chapter 1/jan_only_sed.png",
 ####### do restructuring to look at this by week ###
 li_summary_2 = lakeice |> 
   mutate(week = week(date_time), 
-         month = month(date, label = TRUE)) |> 
+         #month = month(date, label = TRUE)
+         ) |> 
   group_by(year, week, lake) |> 
   summarize(mean_thickness = mean(z_water_m, na.rm = T))
 
@@ -287,16 +314,32 @@ peak_solar_week <- fulljoined_2 |>
       #week == 3
       )
 
+peak_solar_lm <- peak_solar_week |> 
+  group_by(lake) |> 
+  nest() |> 
+  mutate(
+    model = map(data, ~ lm(mean_sed ~ mean_thickness, data = .x)),
+    tidied = map(model, broom::tidy),
+    glanced = map(model, broom::glance)  # this adds R², adj R², etc.
+  )
+
+# To see both coefficients and R² together
+peak_solar_lm |> 
+  select(lake, tidied, glanced) |> 
+  unnest(tidied, names_sep = "_coef") |> 
+  unnest(glanced, names_sep = "_model")
+
+
 ggplot(peak_solar_week, aes(mean_sed, mean_thickness)) + 
   geom_smooth(method = "lm", se = F) + 
-  geom_point() + 
+  geom_point(size = 3) + 
   facet_wrap(vars(lake), scales = "free") + 
   ggtitle("Peak Solar") + 
   scale_color_brewer(palette = "Set1") +
   xlab("Mean Sediment Abundance (%)") + ylab("Mean Ice Thickness (m)") + 
   theme_linedraw(base_size = 20)  
 
-ggsave("plots/manuscript/chapter 1/Peak_Solar_Comparison_20250403.png", 
+ggsave("plots/manuscript/chapter 1/Peak_Solar_Comparison_20250408.png", 
        width = 12, height = 8, dpi = 300)
 
 #### Create a dual panel plot where only the lake ice thickness from 2016-2024 to sediment abundannce
