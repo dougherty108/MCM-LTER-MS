@@ -30,6 +30,7 @@ for (i in 1:length(files)) {
     setwd("~/Google Drive/My Drive/EarthEngine/landsat/RGB_images")
     
     raster_file <- rast(files[[i]])
+    raster_file <- project(raster_file, "EPSG:32758")
     raster_df <- as.data.frame(raster_file, xy = TRUE)
     
     # Check if required bands exist
@@ -59,10 +60,11 @@ for (i in 1:length(files)) {
         geom_raster(aes(fill = rgb(B4, B3, B2))) +
         scale_fill_identity() +
         labs(title = paste0(type, " - ", year), x = "Easting", y = "Northing") +
-        coord_fixed() +
-        scale_x_reverse() + 
-        scale_y_reverse() + 
-        theme_minimal()
+        coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) + 
+        annotation_north_arrow(location = "tr", which_north = "true",
+                               style = north_arrow_fancy_orienteering) +
+        annotation_scale(location = "bl", width_hint = 0.3) + 
+        theme_linedraw()
       
       #setwd("~/Documents/R-Repositories/MCM-LTER-MS/plots/LANDSAT/RGB_images")
       setwd("~/Google Drive/My Drive/EarthEngine/plots/RGB_images")

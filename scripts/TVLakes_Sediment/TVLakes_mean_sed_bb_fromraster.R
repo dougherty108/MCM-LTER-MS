@@ -97,15 +97,6 @@ files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250325
 
 setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
 
-# Predefine output tibble
-output <- tibble(
-  date = character(),
-  `Lake Fryxell` = numeric(),
-  `Lake Hoare` = numeric(),
-  `East Lake Bonney` = numeric(),
-  `West Lake Bonney` = numeric()
-)
-
 # Define point coordinates
 points_df <- data.frame(
   name = c("Lake Fryxell", "Lake Hoare", "East Lake Bonney", "West Lake Bonney"),
@@ -116,21 +107,23 @@ points_df <- data.frame(
 # Convert to sf object and buffer
 points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
 # Buffer after ensuring the correct CRS
-buffered_points_sf <- st_buffer(points_sf, dist = 150)
-
-# Convert `sf` buffer object to `Spatial` before using extract()
-buffered_points_sp <- as(buffered_points_sf, "Spatial")  
-
-setwd("~charliedougherty")
-
+#buffered_points_sf <- st_buffer(points_sf, dist = 150)
 
 setwd("~charliedougherty")
 
 # Define buffer distances
 buffer_distances <- c(50, 100, 150, 200, 300)  # Modify distances as needed
+#buffer_distances = 100
+# Convert to sf object and buffer
+points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
+# Buffer after ensuring the correct CRS
+#buffered_points_sf <- st_buffer(points_sf, dist = 150)
+# Convert `sf` buffer object to `Spatial` before using extract()
+#buffered_points_sp <- as(buffered_points_sf, "Spatial")  
 
 # Convert points to sf object
 points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)
+
 
 output_buffers <- tibble(
   date = character(),
@@ -141,27 +134,16 @@ output_buffers <- tibble(
   `West Lake Bonney` = numeric()
 )
 
-# Loop through each buffer distance
 for (buffer_dist in buffer_distances) {
-  
-  # Create buffered points for the current distance
   buffered_points_sf <- st_buffer(points_sf, dist = buffer_dist)
-  
-  # Convert to Spatial object before extracting values
   buffered_points_sp <- as(buffered_points_sf, "Spatial")
   
-  # Loop through each raster file
   for (i in seq_along(files)) {
     raster_file <- raster(files[i])
-    
-    # Extract mean values using the corrected object
     extracted_values <- raster::extract(raster_file, buffered_points_sp, fun = mean, na.rm = TRUE)
-    
-    # Extract date from filename
     date <- str_extract(files[i], "20\\d{2}-\\d{2}-\\d{2}")
     
-    # Append results to output tibble
-    output_buffers <- bind_rows(output, tibble(
+    output_buffers <- bind_rows(output_buffers, tibble(
       date = date,
       buffer_distance = buffer_dist,
       `Lake Fryxell` = extracted_values[1],
@@ -170,9 +152,10 @@ for (buffer_dist in buffer_distances) {
       `West Lake Bonney` = extracted_values[4]
     ))
     
-    print(paste("Processed file", i, "for buffer", buffer_dist))  # Keep track of progress
+    print(paste("Processed file", i, "for buffer", buffer_dist))
   }
 }
+
 
 buffer_plot <- output_buffers |> 
   pivot_longer(cols = c(`Lake Fryxell`, `Lake Hoare`, `East Lake Bonney`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |> 
@@ -180,11 +163,12 @@ buffer_plot <- output_buffers |>
   mutate(date = ymd(date), 
          buffer_distance = as.character(buffer_distance))
 
-ggplot(buffer_plot, aes(date, sediment, color = buffer_distance)) + 
+ggplot(buffer_plot, aes(date, 1-sediment, color = buffer_distance)) + 
   geom_path() + 
   facet_wrap(vars(lake), scales = "free") + 
   theme_linedraw()
 
+write_csv(buffer_plot, "~/Documents/R-Repositories/MCM-LTER-MS/data/sediment abundance data/LANDSAT_multiplebuffers_20250409.csv")
 
 
 

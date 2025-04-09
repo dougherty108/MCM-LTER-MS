@@ -19,7 +19,7 @@ get_type <- function(filename) {
 }
 
 # Create output directories for each type
-output_base <- "~/Google Drive/My Drive/EarthEngine/plots/final_manuscript_plots/Hokusai2"
+output_base <- "~/Google Drive/My Drive/EarthEngine/plots/20250409"
 dir.create(output_base, showWarnings = FALSE)
 
 types <- unique(na.omit(sapply(files, get_type)))
@@ -31,12 +31,14 @@ for (t in types) {
 for (i in 1:length(files)) {
   setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
   
-  raster_file <- raster(files[[i]])
+  raster_file <- rast(files[[i]])
+  raster_file <- project(raster_file, "EPSG:32758")
+  
   raster_df <- as.data.frame(raster_file, xy = TRUE) |> 
     drop_na()
   
   raster_df = raster_df |> 
-    mutate(sediment_abundance = (1 - ice_endmember))
+    mutate(sediment_coverage = (1 - ice_endmember))
   
   year <- str_extract(files[[i]], "20\\d{2}-\\d{2}-\\d{2}")
   type <- get_type(files[[i]])
@@ -45,16 +47,16 @@ for (i in 1:length(files)) {
     plot_path <- file.path(output_base, type, paste0("LANDSAT_plot_", type, "_", year, ".png"))
     
     ggplot() +
-      geom_raster(data = raster_df, aes(x = x, y = y, fill = sediment_abundance)) +
-      coord_sf() +
+      geom_raster(data = raster_df, aes(x = x, y = y, fill = sediment_coverage)) +
+      coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
       scale_fill_gradientn(colors = met_palette) +
-      #scale_fill_distiller(palette = "RdBu", direction = -1, na.value = "transparent") +
-      labs(title = paste0(type, " - ", year), x = "Easting", y = "Northing") +
-      scale_x_reverse() + 
-      scale_y_reverse() + 
-      theme_minimal()
+      labs(title = paste0("HOA - ", year), x = "Easting", y = "Northing") +
+      annotation_north_arrow(location = "tr", which_north = "true",
+                             style = north_arrow_fancy_orienteering) +
+      annotation_scale(location = "bl", width_hint = 0.3) + 
+      theme_linedraw()
     
-    setwd("~/Google Drive/My Drive/EarthEngine/plots/final_manuscript_plots/Hokusai2")
+    setwd("~/Google Drive/My Drive/EarthEngine/plots/20250409")
     ggsave(filename = plot_path)
     print(paste0("Saved plot for ", type, " - ", year, " (", i, "/", length(files), ")"))
   }
@@ -84,7 +86,8 @@ dir.create(hoa_output, showWarnings = FALSE, recursive = TRUE)
 for (i in seq_along(files)) {
   setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
   
-  raster_file <- raster(files[[i]])
+  raster_file <- rast(files[[i]])
+  raster_file <- project(raster_file, "EPSG:32758")
   raster_df <- as.data.frame(raster_file, xy = TRUE) |> 
     drop_na()
   
@@ -101,11 +104,7 @@ for (i in seq_along(files)) {
     
     ggplot() +
       geom_raster(data = raster_df, aes(x = x, y = y, fill = sediment_coverage)) +
-      coord_sf(crs = 3031,
-               datum = sf::st_crs("EPSG:3031")
-               ) +
-      #scale_y_reverse() + 
-      #scale_x_reverse() + 
+      coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
       scale_fill_gradientn(colors = met_palette) +
       labs(title = paste0("HOA - ", year), x = "Easting", y = "Northing") +
       annotation_north_arrow(location = "tr", which_north = "true",
@@ -118,26 +117,4 @@ for (i in seq_along(files)) {
     print(paste0("Saved plot for HOA - ", year, " (", i, "/", length(files), ")"))
   }
 }
-
-
-
-raster_df_flipped <- raster_df %>%
-  mutate(y_plot = -y)  # This flips it vertically for plotting only
-
-ggplot() +
-  geom_raster(data = raster_df_flipped, aes(x = x, y = y_plot, fill = sediment_coverage)) +
-  #scale_y_continuous(
-  #  name = "Northing",
-  ##  breaks = scales::pretty_breaks(n = 5),
-  #  labels = function(b) format(-b, scientific = FALSE)  # Restore original y-labels
-  #) +
-  scale_x_continuous(name = "Easting") +
-  scale_fill_gradientn(colors = met_palette) +
-  #labs(title = paste0("HOA - ", year)) +
-  coord_sf(crs = 3031) +
-  annotation_north_arrow(location = "tr", which_north = "true",
-                         style = north_arrow_fancy_orienteering) +
-  annotation_scale(location = "bl", width_hint = 0.3) +
-  theme_linedraw()
-
 
