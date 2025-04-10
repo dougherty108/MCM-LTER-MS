@@ -67,7 +67,7 @@ output_to_save <- output |>
          sediment_abundance = 1-sediment) |> 
   drop_na()
 
-write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250403.csv")
+write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250409_150m.csv")
 
 # Plot results
 ggplot(output_to_save, aes(date, sediment_abundance)) + 
@@ -112,7 +112,7 @@ points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)
 setwd("~charliedougherty")
 
 # Define buffer distances
-buffer_distances <- c(50, 100, 150, 200, 300)  # Modify distances as needed
+buffer_distances <- c(50, 100, 150, 200, 300, 400, 500)  # Modify distances as needed
 #buffer_distances = 100
 # Convert to sf object and buffer
 points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
@@ -156,17 +156,60 @@ for (buffer_dist in buffer_distances) {
   }
 }
 
+# define function for seasons
+## Define a season function to plot data by season. Makes data viz a lot easier. 
+get_season <- function(date) {
+  month <- month(date)
+  year <- year(date)
+  
+  if (month %in% c(11, 12)) {
+    return(paste0("Summer ", year))  # November and December belong to the current winter
+  } else if (month == 1) {
+    return(paste0("Summer ", year - 1))  # January belongs to the previous winter
+  } else if (month == 2) {
+    return(paste0("Summer ", year - 1))  # February belongs to the previous winter
+  } else if (month == 3) {
+    return(paste0("Fall ", year))  # March is Spring
+  } else if (month %in% 4:5) {
+    return(paste0("Fall ", year))  # April and May are Spring
+  } else if (month == 6) {
+    return(paste0("Winter ", year))  # June is Summer
+  } else if (month %in% 7:8) {
+    return(paste0("Winter ", year))  # July and August are Summer
+  } else if (month == 9) {
+    return(paste0("Spring ", year))  # September is Fall
+  } else if (month %in% 10) {
+    return(paste0("Summer ", year))  # October is Fall
+  }
+}
+
+
 
 buffer_plot <- output_buffers |> 
-  pivot_longer(cols = c(`Lake Fryxell`, `Lake Hoare`, `East Lake Bonney`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |> 
+  pivot_longer(cols = c(`Lake Fryxell`, `Lake Hoare`, `East Lake Bonney`, `West Lake Bonney`), 
+               names_to = "lake", values_to = "sediment") |> 
   drop_na(sediment) |> 
   mutate(date = ymd(date), 
-         buffer_distance = as.character(buffer_distance))
+         buffer_distance = as.character(buffer_distance),
+         season = sapply(date, get_season))
 
-ggplot(buffer_plot, aes(date, 1-sediment, color = buffer_distance)) + 
-  geom_path() + 
+ggplot(buffer_plot, aes(date, (1-sediment)*100, color = buffer_distance)) + 
+  geom_point() + 
   facet_wrap(vars(lake), scales = "free") + 
-  theme_linedraw()
+  xlab("Date") + ylab("Sediment Coverage (%)") + 
+  theme_linedraw(base_size = 20) 
+
+ggsave("~/Documents/R-Repositories/MCM-LTER-MS/plots/manuscript/chapter 1/comparison_of_buffer_sizes.png", 
+       height = 8, width = 12, dpi = 300)
+
+buffer_pivoted = buffer_plot |> 
+  pivot_wider(names_from = buffer_distance, values_from = sediment)
+
+# 50, 100, 150, 200, 300
+ggplot(buffer_pivoted, aes(`150`, `300`)) + 
+  geom_point() + 
+  facet_wrap(vars(lake), scales = "free")
+
 
 write_csv(buffer_plot, "~/Documents/R-Repositories/MCM-LTER-MS/data/sediment abundance data/LANDSAT_multiplebuffers_20250409.csv")
 

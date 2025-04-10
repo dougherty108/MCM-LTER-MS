@@ -26,21 +26,21 @@ tif_files <- list.files(tif_dir, pattern = "LANDSAT_BON.*\\.tif$", full.names = 
 # Load only the first band of each raster
 raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[1]]))  # Adjust `[[1]]` to desired band index
 
-# load shapefile of East Lake Bonney
-#eastlobe_outline <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/East Lake Bonney.kml")
-
 # Compute the mean across all layers (ignoring NA values)
 mean_raster <- app(raster_stack, fun=mean, na.rm = F)
+
+mean_raster = project(mean_raster, "EPSG:32758")
 
 # Save the output raster
 mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
   mutate(
-    x = x*-1, 
-         y = y*-1)
+    #x = x*-1, 
+         #y = y*-1
+    )
 
 colnames(mean_df)[3] = "sediment_mean"
 
-mean_df2 <- mean_df |> 
+mean_df_LB <- mean_df |> 
   mutate(sediment_filter = sediment_mean, 
          ice_mean = 1-sediment_mean) #|> 
   #filter(sediment_filter < 0.99)
@@ -49,14 +49,15 @@ mean_df2 <- mean_df |>
 met_palette <- MetBrewer::met.brewer("Derain")
 
 bonney <- ggplot() +
-  geom_raster(data = mean_df2, aes(x = x, y = y, fill = (ice_mean)*100)) +
-  coord_fixed() +
+  geom_raster(data = mean_df_LB, aes(x = x, y = y, fill = (ice_mean)*100)) +
+  coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Bonney", x = "Easting", y = "Northing",
+  labs(title = "Lake Bonney", x = "", y = "Northing",
        fill = "Sediment (%)") +
-  #scale_x_reverse(limits = c(408495, 401115)) + 
-  scale_y_reverse() + 
   theme_linedraw(base_size = 20) +
+  annotation_north_arrow(location = "tr", which_north = "true",
+                         style = north_arrow_fancy_orienteering) +
+  annotation_scale(location = "bl", width_hint = 0.3) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none"
         )
@@ -67,8 +68,6 @@ dummy <-  ggplot() +
   scale_fill_gradientn(colors = met_palette) +
   labs(title = "Lake Bonney Hotspots", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
-  #scale_x_reverse() + 
-  scale_y_reverse() + 
   theme_linedraw(base_size = 20) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         #legend.position = "none"
@@ -78,7 +77,7 @@ setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
 ggsave("plots/hotspot/lk_bonney_hotspot.png", 
        plot = bonney,
-       dpi = 400)
+       dpi = 400, width = 8, height = 8)
 
 ###### HOARE 
 
@@ -90,38 +89,34 @@ tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250325"
 # Get list of all .tif files in the directory
 tif_files <- list.files(tif_dir, pattern = "LANDSAT_HOA.*\\.tif$", full.names = TRUE)
 
-#tif_files = tif_files[tif_files != 'Google Drive/My Drive/EarthEngine/landsat/20250325/LANDSAT_HOA_unmix_mar12_2020-01-02.tif']
-
 # Load only the first band of each raster
 raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[2]]))  # Adjust `[[1]]` to desired band index
 
-# load shapefile of East Lake Bonney
-#eastlobe_outline <- read_sf("Documents/R-Repositories/MCM-LTER-MS/data/shapefiles/East Lake Bonney.kml")
-
 # Compute the mean across all layers (ignoring NA values)
-mean_raster <- app(raster_stack, fun=mean, na.rm = F)
+mean_raster <- app(raster_stack, fun=mean, na.rm = F) 
+mean_raster <- project(mean_raster, "EPSG:32758")
 
 # Save the output raster
-mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
-  mutate(y = y*-1)
+mean_df_LH <- as.data.frame(mean_raster, xy = TRUE) 
 
-colnames(mean_df)[3] = "sediment_mean"
+colnames(mean_df_LH)[3] = "sediment_mean"
 
 # Select color palette
 met_palette <- MetBrewer::met.brewer("Derain")
 
 hoare <- ggplot() +
-  geom_raster(data = mean_df, aes(x = x, y = y, fill = (sediment_mean*100))) +
-  coord_fixed() +
+  geom_raster(data = mean_df_LH, aes(x = x, y = y, fill = (sediment_mean)*100)) +
+  coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Hoare", x = "Easting", y = "Northing",
+  labs(title = "Lake Hoare", x = "Easting", y = "",
        fill = "Sediment (%)") +
-  scale_x_reverse() + 
-  #scale_y_reverse() +  
   theme_linedraw(base_size = 20) +
+  annotation_north_arrow(location = "tr", which_north = "true",
+                         style = north_arrow_fancy_orienteering) +
+  annotation_scale(location = "bl", width_hint = 0.3) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none"
-        )
+  )
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
@@ -145,57 +140,50 @@ raster_stack <- rast(lapply(tif_files, function(f) rast(f)[[2]]))  # Adjust `[[1
 
 # Compute the mean across all layers (ignoring NA values)
 mean_raster <- app(raster_stack, fun=mean, na.rm = F)
+mean_raster = project(mean_raster, "EPSG:32758")
 
 # Save the output raster
-mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
-  mutate(y = y*-1)
+mean_df_LF <- as.data.frame(mean_raster, xy = TRUE)
 
-colnames(mean_df)[3] = "sediment_mean"
+colnames(mean_df_LF)[3] = "sediment_mean"
 
 # Select color palette
 met_palette <- MetBrewer::met.brewer("Derain")
 
 fryxell <- ggplot() +
-  geom_raster(data = mean_df, aes(x = x, y = y, fill = (sediment_mean*100))) +
-  coord_fixed() +
+  geom_raster(data = mean_df_LF, aes(x = x, y = y, fill = (sediment_mean)*100)) +
+  coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Fryxell", x = "Easting", y = "Northing",
+  labs(title = "Lake Fryxell", x = "", y = "",
        fill = "Sediment (%)") +
   theme_linedraw(base_size = 20) +
-  scale_x_reverse() + 
+  annotation_north_arrow(location = "tr", which_north = "true",
+                         style = north_arrow_fancy_orienteering) +
+  annotation_scale(location = "bl", width_hint = 0.3) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "none"
-        )
+  )
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
-#ggsave("plots/hotspot/lk_bonney_hotspot.png", 
-#       plot = fryxell, dpi = 400)
+ggsave("plots/hotspot/lk_fryxell_hotspot.png", 
+       plot = fryxell, dpi = 400, width = 8, height = 9)
 
-
-# final plot
-bonney1 <- bonney +
-  annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
-
-hoare1 <- hoare +
-  annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm")) 
-
-fryxell1 <- fryxell +
-  annotation_scale(location = "bl", pad_x = unit(0.5, "cm"), pad_y = unit(0.5, "cm"))
 
 legend <- get_legend(dummy)
 
-final_fig = ggarrange(bonney1, hoare1, fryxell1, legend,
+final_fig = ggarrange(bonney, hoare, fryxell, #legend,
           nrow = 1#, widths = c(1, 1, 1)
           )
 
+
 annotate_figure(final_fig,
                 top = text_grob("Hotspots", face = "bold.italic", size = 20, 
-                                y = -4.0))
+                                y = -2.0))
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS/plots/manuscript/chapter 1")
 ggsave("hotpots_redone_foraxes.png", 
-       dpi = 300, height = 7, width = 14)
+       dpi = 700, height = 7, width = 14)
 
 
 

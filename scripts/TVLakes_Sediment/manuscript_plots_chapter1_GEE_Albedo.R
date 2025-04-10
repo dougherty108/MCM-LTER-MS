@@ -31,11 +31,29 @@ get_season <- function(date) {
   }
 }
 
-mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250403.csv") |> 
+mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250409_150m.csv") |> 
   mutate(date = ymd(date), 
          type = 'lake_monitoring_station', 
          season = sapply(date, get_season), 
          month = month(date, label = TRUE))
+
+# Calculate lake-specific means
+lake_means <- mean_BB |> 
+  group_by(lake) |> 
+  summarise(mean_sediment = mean(sediment_abundance * 100, na.rm = TRUE))
+
+##### Plot by lake with lake-specific mean lines
+ggplot(mean_BB, aes(date, sediment_abundance * 100, color = month)) + 
+  geom_point(position = position_jitter(width = 0.2, height = 0.1), size = 2) + 
+  geom_hline(data = lake_means, aes(yintercept = mean_sediment), 
+             linetype = "dashed", color = "red", size = 1, inherit.aes = FALSE) +
+  facet_wrap(vars(lake)) + 
+  xlab("Date") + 
+  ylab("Sediment Abundance (%)") + 
+  theme_linedraw(base_size = 20)
+
+ggsave("plots/manuscript/chapter 1/BB_sed_by_lake_with_mean_line.png", dpi = 700, 
+       height = 8, width = 12)
 
 #####plot by lake
 ggplot(mean_BB, aes(date, sediment_abundance*100, color = month)) + 

@@ -469,7 +469,6 @@ for (t_idx in 1:nrow(time_series)) {
   # Update temperature profile using the 1D heat diffusion equation
   for (i in 2:length(prevT)) {
     newT[i] <- prevT[i] + alpha * (dt * 86400) / dx^2 * (prevT[i + 1] - 2 * prevT[i] + prevT[i - 1])
-    #print(newT)
   }
   
   # Apply boundary conditions
@@ -500,7 +499,7 @@ for (t_idx in 1:nrow(time_series)) {
     # energy to evaporate water
     xLatent = xLv
     
-    #Compute atmospheric vapor pressure from relative humidity data (output is in hPa?)
+    #Compute atmospheric vapor pressure from relative humidity data
     ea = ((rh/100)* A * exp((B * (T_air - Tf))/(C + (T_air - Tf))))/100
     
     # compute the density of air slightly conflicts with what we have above
@@ -532,7 +531,7 @@ for (t_idx in 1:nrow(time_series)) {
       }
   
   # Surface heat flux (absorbed shortwave, net longwave, conductive heat flux, sensible heat flux, and latent heat flux)
-  surface_flux <- SW_abs + (LW_net - (k * (prevT[1] - T_air) / dx)) + Qh + Ql  # Adjust conductive term
+  surface_flux <- SW_abs + (LW_net - (k * (prevT[1] - T_air) / dx)) + Qh + Ql 
   # Calculate melting at the surface (and ablation)
   if (!is.na(surface_flux) && surface_flux > 0) {
     dL_surface <- surface_flux * (dt * 86400) / (rho * L_f)
@@ -582,7 +581,7 @@ results |>
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
 
-eqqggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250407.png", width = 9, height = 6, dpi = 300)
+ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250407.png", width = 9, height = 6, dpi = 300)
 
 #troubleshooting plots, to find distance of change at top and bottom
 plot(dL_bottom.vec)
