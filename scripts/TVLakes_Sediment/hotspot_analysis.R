@@ -114,15 +114,15 @@ hoare <- ggplot() +
   annotation_north_arrow(location = "tr", which_north = "true",
                          style = north_arrow_fancy_orienteering) +
   annotation_scale(location = "bl", width_hint = 0.3) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-        legend.position = "none"
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)#, 
+        #legend.position = "none"
   )
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 
-ggsave("plots/hotspot/lk_bonney_hotspot.png", 
+ggsave("plots/hotspot/lk_hoare_hotspot.png", 
        plot = hoare,
-       dpi = 400)
+       dpi = 700)
 
 
 ###### Fryxell
