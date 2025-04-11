@@ -52,14 +52,14 @@ bonney <- ggplot() +
   geom_raster(data = mean_df_LB, aes(x = x, y = y, fill = (ice_mean)*100)) +
   coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Bonney", x = "", y = "Northing",
+  labs(title = "Lake Bonney", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
   theme_linedraw(base_size = 20) +
   annotation_north_arrow(location = "tr", which_north = "true",
                          style = north_arrow_fancy_orienteering) +
   annotation_scale(location = "bl", width_hint = 0.3) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-        legend.position = "none"
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)#, 
+        #legend.position = "none"
         )
 
 dummy <-  ggplot() +
@@ -108,7 +108,7 @@ hoare <- ggplot() +
   geom_raster(data = mean_df_LH, aes(x = x, y = y, fill = (sediment_mean)*100)) +
   coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Hoare", x = "Easting", y = "",
+  labs(title = "Lake Hoare", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
   theme_linedraw(base_size = 20) +
   annotation_north_arrow(location = "tr", which_north = "true",
@@ -154,14 +154,14 @@ fryxell <- ggplot() +
   geom_raster(data = mean_df_LF, aes(x = x, y = y, fill = (sediment_mean)*100)) +
   coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Fryxell", x = "", y = "",
+  labs(title = "Lake Fryxell", x = "Easting", y = "Northing",
        fill = "Sediment (%)") +
   theme_linedraw(base_size = 20) +
   annotation_north_arrow(location = "tr", which_north = "true",
                          style = north_arrow_fancy_orienteering) +
   annotation_scale(location = "bl", width_hint = 0.3) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-        legend.position = "none"
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)#, 
+       # legend.position = "none"
   )
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
