@@ -374,10 +374,10 @@ if (length(airt_interp) != length(time_model) |
 time_series <- tibble(
   time = time_model,                        # Model time steps
   T_air = airt_interp,                      # Interpolated air temperature Kelvin
-  SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
+  SW_in = 1.10*sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = 1.05(0.14 + ((albedo_interp)*0.6959)),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = (0.14 + ((albedo_interp)*0.6959)),  # albedo, unitless (lower albedo value from measured BOYM data)
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
   delta_T = T_air - lag(T_air),             # difference in air temperature, for later flux calculation
@@ -582,7 +582,7 @@ results |>
 # tuned output (R^2 = 0.86)
 #write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250414.csv")
 # 5% increase
-write_csv(results, "data/thermal diffusion model data/model_outputs/5%_increase_a_20250414.csv")
+#write_csv(results, "data/thermal diffusion model data/model_outputs/5%_increase_a_20250414.csv")
 # 10% increase
 #write_csv(results, "data/thermal diffusion model data/model_outputs/10%_increase_a_20250414.csv")
 # 5% decrease
@@ -590,7 +590,7 @@ write_csv(results, "data/thermal diffusion model data/model_outputs/5%_increase_
 # 10% decrease
 #write_csv(results, "data/thermal diffusion model data/model_outputs/10%_decrease_a_20250414.csv")
 # 10% in SW
-#write_csv(results, "data/thermal diffusion model data/model_outputs/10%_increase_SW_20250414.csv")
+#write_csv(results, "data/thermal diffusion model data/model_outputs/10%_increase_sw_20250414.csv")
 
 
 
@@ -676,11 +676,6 @@ plot_lowest <- results_lowest |>
        title = "10% Decrease") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
-
-ggarrange(plot_regular, plot_raised, plot_lowered, plot_lowest, plot_static)
-
-ggsave("plots/manuscript/chapter 2/ice_thickness_modeled_scenarios_v3.png", 
-       width = 15, height = 7, dpi = 300)
 
 
 ############## can check the outputs against actual ice thickness in Model_output_interrogation.R
