@@ -377,9 +377,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  #albedo = (0.14 + ((albedo_interp)*0.69)),  # albedo, unitless (lower albedo value from measured BOYM data)
-  albedo = albedo_interp,                    # Constant albedo (can be replaced with a time series if needed)
-  #albedo = 0.8,
+  albedo = 1.05(0.14 + ((albedo_interp)*0.6959)),  # albedo, unitless (lower albedo value from measured BOYM data)
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
   delta_T = T_air - lag(T_air),             # difference in air temperature, for later flux calculation
@@ -392,11 +390,11 @@ series <- time_series |>
   pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind), 
                names_to = "variable", values_to = "data")
   
-ggplot(series, aes(time, data)) + 
-  geom_line() + 
-  xlab("Date") + ylab("Parameter") +
-  facet_wrap(vars(variable), scales = "free") + 
-  theme_linedraw()
+#ggplot(series, aes(time, data)) + 
+#  geom_line() + 
+#  xlab("Date") + ylab("Parameter") +
+#  facet_wrap(vars(variable), scales = "free") + 
+#  theme_linedraw()
 
 
 
@@ -529,7 +527,7 @@ for (t_idx in 1:nrow(time_series)) {
       }
   
   # Surface heat flux (absorbed shortwave, net longwave, conductive heat flux, sensible heat flux, and latent heat flux)
-  surface_flux <- chi*SW_abs + (LW_net - (k * (prevT[1] - T_air) / dx)) + Qh + Ql 
+  surface_flux <- SW_abs + (LW_net - (k * (prevT[1] - T_air) / dx)) + Qh + Ql 
   # Calculate melting at the surface (and ablation)
   if (!is.na(surface_flux) && surface_flux > 0) {
     dL_surface <- surface_flux * (dt * 86400) / (rho * L_f)
@@ -579,10 +577,22 @@ results |>
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250414.png", width = 9, height = 6, dpi = 300)
+#ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250414.png", width = 9, height = 6, dpi = 300)
 
-# save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250414.csv")
+# tuned output (R^2 = 0.86)
+#write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250414.csv")
+# 5% increase
+write_csv(results, "data/thermal diffusion model data/model_outputs/5%_increase_a_20250414.csv")
+# 10% increase
+#write_csv(results, "data/thermal diffusion model data/model_outputs/10%_increase_a_20250414.csv")
+# 5% decrease
+#write_csv(results, "data/thermal diffusion model data/model_outputs/5%_decrease_a_20250414.csv")
+# 10% decrease
+#write_csv(results, "data/thermal diffusion model data/model_outputs/10%_decrease_a_20250414.csv")
+# 10% in SW
+#write_csv(results, "data/thermal diffusion model data/model_outputs/10%_increase_SW_20250414.csv")
+
+
 
 
 #troubleshooting plots, to find distance of change at top and bottom
