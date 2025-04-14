@@ -31,7 +31,7 @@ get_season <- function(date) {
   }
 }
 
-mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250409_150m.csv") |> 
+mean_BB <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250403.csv") |> 
   mutate(date = ymd(date), 
          type = 'lake_monitoring_station', 
          season = sapply(date, get_season), 
@@ -175,26 +175,28 @@ ggsave("plots/manuscript/chapter 1/ice_thickness_total_years.png", dpi = 700,
 lakeice = lakeice1 |> 
   filter(date_time >= "2016-05-01") |> 
   #mutate(season = sapply(date_time, get_season)) |> 
-  filter(str_detect(string = location, pattern = "incubation hole")) |> 
-  #filter(grepl("^O", location)) |> 
+  filter(str_detect(string = location, pattern = "incubation hole") | 
+           str_detect(string = location, pattern = "sample hole")) |> 
+  filter(grepl("^O", location)) |> 
   drop_na(z_water_m)
 
 #FIND SEASONAL DROPOFF OF ICE THICKNESS
-seasonal_changes <- lakeice1 %>%
+seasonal_changes <- lakeice %>%
   group_by(season, lake) |> 
   arrange(season, date_time) %>%
   summarise(
-    First_Measurement = first(z_water_m*-1),
-    Last_Measurement = last(z_water_m*-1),
+    First_Measurement = first(z_water_m),
+    Last_Measurement = last(z_water_m),
     Difference = Last_Measurement - First_Measurement
   )
 
-ggplot(seasonal_changes, aes(season, Difference), fill = lake) + 
-  geom_col() + 
-  scale_color_brewer(palette = "Set1") + 
+ggplot(seasonal_changes, aes(season, Difference)) + 
+  geom_col(aes(fill = lake)) + 
+  scale_fill_brewer(palette = "Set1") + 
   facet_wrap(vars(lake)) + 
   theme_linedraw(base_size = 20) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = "none") + 
   xlab("Seasonal") + ylab("Change in Ice Thickness")
 
 ggsave("plots/manuscript/chapter 1/seasonal_ice_drop.png", 

@@ -16,7 +16,7 @@ get_type <- function(filename) {
 }
 
 # Create output directories for each type
-output_base <- "~/Google Drive/My Drive/EarthEngine/plots/RGB_images"
+output_base <- "~/Google Drive/My Drive/EarthEngine/plots/RGB_images_v2"
 dir.create(output_base, showWarnings = FALSE)
 
 types <- unique(na.omit(sapply(files, get_type)))
@@ -64,10 +64,10 @@ for (i in 1:length(files)) {
         annotation_north_arrow(location = "tr", which_north = "true",
                                style = north_arrow_fancy_orienteering) +
         annotation_scale(location = "bl", width_hint = 0.3) + 
-        theme_linedraw()
+        theme_linedraw(base_size = 15) + 
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
       
-      #setwd("~/Documents/R-Repositories/MCM-LTER-MS/plots/LANDSAT/RGB_images")
-      setwd("~/Google Drive/My Drive/EarthEngine/plots/RGB_images")
+      setwd("~/Google Drive/My Drive/EarthEngine/plots/RGB_images_v2")
       ggsave(filename = plot_path)
       print(paste0("Saved plot for ", type, " - ", year, " (", i, "/", length(files), ")"))
     }

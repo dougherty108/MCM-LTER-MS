@@ -2,7 +2,7 @@ library(raster)
 library(sf)
 library(tidyverse)
 library(lubridate)
-library(stars)
+library(terra)
 library(MetBrewer)
 library(RColorBrewer)
 library(ggspatial)
@@ -19,7 +19,7 @@ get_type <- function(filename) {
 }
 
 # Create output directories for each type
-output_base <- "~/Google Drive/My Drive/EarthEngine/plots/20250409"
+output_base <- "~/Google Drive/My Drive/EarthEngine/plots/20250414"
 dir.create(output_base, showWarnings = FALSE)
 
 types <- unique(na.omit(sapply(files, get_type)))
@@ -50,13 +50,14 @@ for (i in 1:length(files)) {
       geom_raster(data = raster_df, aes(x = x, y = y, fill = sediment_coverage)) +
       coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
       scale_fill_gradientn(colors = met_palette) +
-      labs(title = paste0("HOA - ", year), x = "Easting", y = "Northing") +
+      labs(title = paste0(type, " ", year), x = "Easting", y = "Northing") +
       annotation_north_arrow(location = "tr", which_north = "true",
                              style = north_arrow_fancy_orienteering) +
       annotation_scale(location = "bl", width_hint = 0.3) + 
-      theme_linedraw()
+      theme_linedraw(base_size = 15) + 
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
     
-    setwd("~/Google Drive/My Drive/EarthEngine/plots/20250409")
+    setwd("~/Google Drive/My Drive/EarthEngine/plots/20250414")
     ggsave(filename = plot_path)
     print(paste0("Saved plot for ", type, " - ", year, " (", i, "/", length(files), ")"))
   }
