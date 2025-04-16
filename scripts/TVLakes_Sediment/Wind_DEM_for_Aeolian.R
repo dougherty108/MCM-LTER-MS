@@ -55,9 +55,9 @@ ggplot(wind_data, aes(x = timestamp)) +
   )
 
 
-setwd("~/Documents/R-Repositories/MCM-LTER-MS")
-ggsave("plots/manuscript/chapter 1/wind_events_wdir_wspd.png", 
-       width = 16, height = 8, dpi = 300)
+##setwd("~/Documents/R-Repositories/MCM-LTER-MS")
+#ggsave("plots/manuscript/chapter 1/wind_events_wdir_wspd.png", 
+    #   width = 16, height = 8, dpi = 300)
 
 setwd("~/Google Drive/My Drive/MCMLTER_Met") 
 # load files 
@@ -88,12 +88,12 @@ calc_wind_alignment_with_slope <- function(wind_dir, aspect_raster, slope_raster
   
   # Filter: Keep values where alignment > 0.5, set others to NA
   
-  slope_corr = slope_raster / 90
+  #slope_corr = slope_raster / 90
   
   # Weight alignment by slope: Multiply alignment by slope values
-  entrainment_likelihood <- alignment #* slope_corr
+  entrainment_likelihood <- alignment * slope
   
-  entrainment_likelihood[entrainment_likelihood >= -0.25] <- NA  
+  #entrainment_likelihood[entrainment_likelihood <= 0.00] <- NA  
   
   return(entrainment_likelihood)
 }
@@ -101,11 +101,7 @@ calc_wind_alignment_with_slope <- function(wind_dir, aspect_raster, slope_raster
 # Function to plot wind alignment and add arrow, incorporating aeolian entrainment likelihood
 plot_wind_alignment_with_slope <- function(wind_dir, aspect, slope, lake_point, title) {
   entrainment_rast <- calc_wind_alignment_with_slope(wind_dir, aspect, slope)
-  
-  # Extract aeolian entrainment likelihood value at the lake point
-  #lake_entrainment_value <- terra::extract(entrainment_rast, lake_point)
-  #print(lake_entrainment_value)
-  
+
   # Convert SpatVector to numeric coordinates for plotting
   lake_coords <- as.data.frame(geom(lake_point))
   lake_x <- lake_coords$x
@@ -131,69 +127,20 @@ plot_wind_alignment_with_slope <- function(wind_dir, aspect, slope, lake_point, 
 }
 
 
-
-# Plot for 70-degree wind
-plot_wind_alignment_with_slope(50, aspect, slope, lake_point, "50-degree wind")
-
-plot_wind_alignment_with_slope(60, aspect, slope, lake_point, "60-degree wind")
-
-plot_wind_alignment_with_slope(70, aspect, slope, lake_point, "70-degree wind")
-
-plot_wind_alignment_with_slope(80, aspect, slope, lake_point, "80-degree wind")
-
-plot_wind_alignment_with_slope(90, aspect, slope, lake_point, "90-degree wind")
-
-plot_wind_alignment_with_slope(100, aspect, slope, lake_point, "100-degree wind")
-
-plot_wind_alignment_with_slope(110, aspect, slope, lake_point, "110-degree wind")
-
-plot_wind_alignment_with_slope(120, aspect, slope, lake_point, "120-degree wind")
-
-plot_wind_alignment_with_slope(130, aspect, slope, lake_point, "130-degree wind")
-
-plot_wind_alignment_with_slope(140, aspect, slope, lake_point, "140-degree wind")
-
-plot_wind_alignment_with_slope(150, aspect, slope, lake_point, "150-degree wind")
-
-plot_wind_alignment_with_slope(170, aspect, slope, lake_point, "170-degree wind")
-
-plot_wind_alignment_with_slope(180, aspect, slope, lake_point, "50-degree wind")
-
-plot_wind_alignment_with_slope(190, aspect, slope, lake_point, "60-degree wind")
-
-plot_wind_alignment_with_slope(200, aspect, slope, lake_point, "70-degree wind")
-
-plot_wind_alignment_with_slope(210, aspect, slope, lake_point, "80-degree wind")
-
-plot_wind_alignment_with_slope(220, aspect, slope, lake_point, "90-degree wind")
-
-plot_wind_alignment_with_slope(230, aspect, slope, lake_point, "100-degree wind")
-
-plot_wind_alignment_with_slope(240, aspect, slope, lake_point, "110-degree wind")
-
-plot_wind_alignment_with_slope(250, aspect, slope, lake_point, "120-degree wind")
-
-plot_wind_alignment_with_slope(260, aspect, slope, lake_point, "130-degree wind")
-
-plot_wind_alignment_with_slope(270, aspect, slope, lake_point, "140-degree wind")
-
-plot_wind_alignment_with_slope(280, aspect, slope, lake_point, "160-degree wind")
-
-plot_wind_alignment_with_slope(290, aspect, slope, lake_point, "170-degree wind")
-
-
-
-
-plot_wind_alignment_with_slope(136, aspect, slope, lake_point, "136-degree wind" )
-
-plot_wind_alignment_with_slope(150, aspect, slope, lake_point, "150-degree wind")
+plot_wind_alignment_with_slope(50, aspect, slope, lake_point, "50-degree wind" )
 
 plot_wind_alignment_with_slope(250, aspect, slope, lake_point, "250-degree wind")
+
+plot_wind_alignment_with_slope(300, aspect, slope, lake_point, "300-degree wind")
 
 # sanity checks
 plot_wind_alignment_with_slope(360, aspect, slope, lake_point, "360 Degrees")
 
 plot_wind_alignment_with_slope(180, aspect, slope, lake_point, "180 Degrees")
+
+
+# for simplicity of the figure, create different functions that filter out the half of the image that don't matter for the point for each 
+# wind direction
 
 
 library(ggpubr)

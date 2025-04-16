@@ -21,24 +21,24 @@ setwd("~charliedougherty")
 ###################### Load Time Series Data by Station######################
 BOYM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_boym_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
-  filter(date_time > '2016-12-21 00:00:00')
+  filter(date_time > '2016-12-23 00:00:00')
   
 HOEM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_hoem_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
-  filter(date_time > '2016-12-21 00:00:00') |> 
+  filter(date_time > '2016-12-23 00:00:00') |> 
   mutate(airtemp_3m_K = airtemp_3m_degc + 273.15)
 
 COHM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_cohm_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
-  filter(date_time > '2016-12-21 00:00:00')
+  filter(date_time > '2016-12-23 00:00:00')
 
 TARM <- read_csv("~/Google Drive/My Drive/MCMLTER_Met/met stations/mcmlter-clim_tarm_15min-20250205.csv") |> 
   mutate(date_time = ymd_hms(date_time)) |> 
-  filter(date_time > '2016-12-21 00:00:00') |> 
+  filter(date_time > '2016-12-23 00:00:00') |> 
   mutate(airtemp_3m_K = airtemp_3m_degc + 273.15)
 
 ###################### Define Parameters ######################
-L_initial <- 3.88       # Initial ice thickness (m) Ice thickness at 12/17/2015 ice to ice
+L_initial <- 3.39       # Initial ice thickness (m) Ice thickness at 12/17/2015 ice to ice
 dx <- 0.10              # Spatial step size (m)
 nx = L_initial/dx       # Number of spatial steps
 dt <-  1/24             # Time step for stability (in days)
@@ -85,11 +85,11 @@ start_time <- min(orig_air_temperature$date_time)
 time_model <- start_time + seq(0, by = dt * 86400, length.out = nt)  # Convert dt from days to seconds
 
 ## alternative option for air temperature, air temperature at the blue box
-air_temperature <- read_csv("data/thermal diffusion model data/ice surface temp/air_temp_ELBBB.csv") |> 
+air_temperature <- read_csv("data/thermal diffusion model data/ice surface temp/air_temp_WLBBB.csv") |> 
   mutate(date_time = mdy_hm(date_time), 
          airtemp_3m_K = surface_temp_C + 273.15)
 
-wlbbb_airtemp <- read_csv('data/thermal diffusion model data/ice surface temp/air_temp_WLBBB.csv') |> 
+elbbb_airtemp <- read_csv('data/thermal diffusion model data/ice surface temp/air_temp_ELBBB.csv') |> 
   mutate(date_time = mdy_hm(date_time), 
          airtemp_3m_K = surface_temp_C + 273.15) |> 
   filter(date_time < "2023-11-01 00:00:00")
@@ -113,7 +113,7 @@ air_temp_gaps <- full_timestamps |>
   left_join(air_temperature, by = "date_time")
 
 air_temperature <- air_temp_gaps |> 
-  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), wlbbb_airtemp$airtemp_3m_K, airtemp_3m_K))
+  mutate(airtemp_3m_K = ifelse(is.na(airtemp_3m_K), elbbb_airtemp$airtemp_3m_K, airtemp_3m_K))
 
 
 # select incoming shortwave radiation data from Lake Bonney Met and fill gaps
@@ -251,14 +251,14 @@ wind_speed = BOYM |>
 ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2025.csv") |>
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
-  filter(location_name == "East Lake Bonney") |> 
+  filter(location_name == "West Lake Bonney") |> 
   filter(date_time > "2016-12-01" & date_time < "2024-04-01")
 
 
 # Load and prepare the data
 albedo_orig <- read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250403.csv") |>  
   mutate(sediment = sediment_abundance) |> 
-  filter(lake == "East Lake Bonney") |> 
+  filter(lake == "West Lake Bonney") |> 
   mutate(date = ymd(date),  # or ymd() if no time data is present, adjust as needed
          month = month(date), 
          year = year(date)) |> 
@@ -377,7 +377,7 @@ time_series <- tibble(
   SW_in = sw_interp,                        # Interpolated shortwave radiation w/m2
   LWR_in = LWR_in_interp,                   # Interpolated incoming longwave radiation w/m2
   LWR_out = LWR_out_interp,                 # Interpolated outgoing longwave radiation w/m2
-  albedo = (0.14 + ((albedo_interp)*0.6959)),  # albedo, unitless (lower albedo value from measured BOYM data)
+  albedo = (0. + ((albedo_interp)*0.6959)),  # albedo, unitless (lower albedo value from measured BOYM data)
   pressure = pressure_interp,               # Interpolated air pressure, Pa
   wind = wind_interp,                       # interpolated wind speed, m/s
   delta_T = T_air - lag(T_air),             # difference in air temperature, for later flux calculation
@@ -399,8 +399,8 @@ ggplot(series, aes(time, data)) +
 
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
-ggsave(filename = "plots/manuscript/chapter 2/ice_model_input_data_20250414.png", 
-       width = 12, height = 8, dpi = 500)
+##ggsave(filename = "plots/manuscript/chapter 2/ice_model_input_data_20250414.png", 
+ #      width = 12, height = 8, dpi = 500)
 
 ###NOTES: The longwave estimations are still a mess. The SW gap fills looks pretty good to me, although there's 
 # pretty bad fit in 2023-2024. 
@@ -464,7 +464,7 @@ for (t_idx in 1:nrow(time_series)) {
   
   # Update temperature profile using the 1D heat diffusion equation
   for (i in 2:length(prevT)) {
-    newT[i] <- prevT[i] + alpha * ((dt * 86400) / dx^2) * (prevT[i + 1] - 2 * prevT[i] + prevT[i - 1])
+    newT[i] <- prevT[i] + alpha * (dt * 86400) / dx^2 * (prevT[i + 1] - 2 * prevT[i] + prevT[i - 1])
   }
   
   # Apply boundary conditions

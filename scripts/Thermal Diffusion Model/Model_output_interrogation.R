@@ -11,13 +11,13 @@ GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_o
   filter(thickness > 0)
 
 summary(GEE_corrected$thickness)
-
 # ice thickness data
 ice_thick <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0.csv") |>
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
   filter(location_name == "East Lake Bonney", 
          ) |> 
+  filter(str_detect(string = location, pattern = "Inside")) |> 
   filter(date_time > "2016-12-01" & date_time < "2025-02-01") |> 
   group_by(date_time) |> 
   summarize(mean_thickness = mean(z_water_m, na.rm = T))
@@ -54,7 +54,6 @@ comp <- ice_thick |>
 summary(comp$mean_thickness)
 summary(comp$modeled_thickness)
 summary(comp$difference)
-
 #plot modeled and measured against each other
 ggplot(comp, aes(mean_thickness, modeled_thickness)) + 
   geom_point(size = 2.5, shape = 1) + 
@@ -62,8 +61,8 @@ ggplot(comp, aes(mean_thickness, modeled_thickness)) +
   xlab("Measured Ice Thickness") + ylab("Modeled Ice Thickness") + 
   theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
-       width = 8, height = 6, dpi = 700)
+#ggsave(filename = "plots/manuscript/chapter 2/modeledice_vs_measuredice.png", 
+ #      width = 8, height = 6, dpi = 700)
 
 linear_model = lm(modeled_thickness ~mean_thickness, data = comp)
 
@@ -81,7 +80,7 @@ thickness_pivot <- comp |>
 
 # what if you remove data past 2022, when the longwave data gets particularly bad
 comp2 <- comp |> 
-  filter(date_time < "2019-05-01")
+  filter(date_time < "2024-05-01")
 
 lin_model_filtered = lm(modeled_thickness ~mean_thickness, data = comp2)
 summary(lin_model_filtered)
