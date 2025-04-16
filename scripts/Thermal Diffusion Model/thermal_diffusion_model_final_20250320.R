@@ -528,6 +528,7 @@ for (t_idx in 1:nrow(time_series)) {
   
   # Surface heat flux (absorbed shortwave, net longwave, conductive heat flux, sensible heat flux, and latent heat flux)
   surface_flux <- SW_abs + (LW_net - (k * (prevT[1] - T_air) / dx)) + Qh + Ql 
+  
   # Calculate melting at the surface (and ablation)
   if (!is.na(surface_flux) && surface_flux > 0) {
     dL_surface <- surface_flux * (dt * 86400) / (rho * L_f)

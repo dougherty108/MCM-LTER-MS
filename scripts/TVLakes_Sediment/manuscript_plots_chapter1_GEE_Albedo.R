@@ -99,8 +99,8 @@ means_pivot = mean_bluebox |>
 ggplot(means_pivot, aes(sediment_abundance_bb, sediment_abundance_wholelake)) + 
   geom_point(size = 2, shape = 1) + 
   geom_abline(size = 2) +
-  coord_fixed() + 
   xlab("Sediment estimate 300m buffered mean") + ylab("Sediment estimate whole lake mean") + 
+  facet_wrap(~lake, scales = "free") + 
   theme_linedraw(base_size = 20)
 
 ggsave("plots/manuscript/chapter 1/wholelake_vs_bb.png", 
