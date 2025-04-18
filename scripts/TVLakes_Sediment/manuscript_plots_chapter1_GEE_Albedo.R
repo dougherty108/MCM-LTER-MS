@@ -111,10 +111,11 @@ ggplot(mean_BB, aes(date, sediment_abundance*100, color = lake)) +
   geom_point() + 
   geom_smooth(se = F) + 
   scale_color_brewer(palette = "Set1") + 
-  facet_wrap(vars(season), scales = "free") +
+  facet_wrap(vars(season), scales = "free_x") +
   scale_x_date(labels = date_format("%b"), breaks = "1 month") + 
   xlab("Date") + ylab("Sediment Abundance (%)") + 
-  theme_linedraw(base_size = 20)
+  theme_linedraw(base_size = 20) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("plots/manuscript/chapter 1/BB_sed_by_season.png", dpi = 700, 
        height = 8, width = 12)
@@ -326,7 +327,13 @@ fulljoined_2 = full_join(sed_monthly_2, li_summary_2) |>
 
 peak_solar_week <- fulljoined_2 |> 
   filter(
-    week == 50 |
+    week == 44 |
+      week == 45 |
+      week == 46 |
+      week == 47 |
+      week == 48 |
+      week == 49 |
+      week == 50 |
       week == 51 | 
       week == 52 | 
       week == 1 | 
@@ -347,7 +354,7 @@ peak_solar_lm <- peak_solar_week |>
 peak_solar_lm |> 
   select(lake, tidied, glanced) |> 
   unnest(tidied, names_sep = "_coef") |> 
-  unnest(glanced, names_sep = "_model")
+  unnest(glanced, names_sep = "_model") 
 
 
 ggplot(peak_solar_week, aes(mean_sed, mean_thickness)) + 
