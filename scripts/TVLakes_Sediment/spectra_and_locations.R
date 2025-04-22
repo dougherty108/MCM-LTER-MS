@@ -41,7 +41,7 @@ split_and_expand <- function(col) {
 }
 
 
-LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LB_20250325.csv") |> 
+LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF_20250421.csv") |> 
   mutate(
     brightest_band_means = split_and_expand(brightest_band_means),
     dimmest_band_means = split_and_expand(dimmest_band_means),

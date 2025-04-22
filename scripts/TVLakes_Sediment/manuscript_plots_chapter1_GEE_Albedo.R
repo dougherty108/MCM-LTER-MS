@@ -43,14 +43,14 @@ lake_means <- mean_BB |>
   summarise(mean_sediment = mean(sediment_abundance * 100, na.rm = TRUE))
 
 ##### Plot by lake with lake-specific mean lines
-ggplot(mean_BB, aes(date, sediment_abundance * 100, color = month)) + 
-  geom_point(position = position_jitter(width = 0.2, height = 0.1), size = 2) + 
+ggplot(mean_BB, aes(date, sediment_abundance * 100, fill = month)) + 
+  geom_point(position = position_jitter(width = 0.2, height = 0.1), size = 4, shape = 21) + 
   geom_hline(data = lake_means, aes(yintercept = mean_sediment), 
              linetype = "dashed", color = "red", size = 1, inherit.aes = FALSE) +
   facet_wrap(vars(lake)) + 
   xlab("Date") + 
   ylab("Sediment Abundance (%)") + 
-  theme_linedraw(base_size = 20)
+  theme_linedraw(base_size = 28)
 
 ggsave("plots/manuscript/chapter 1/BB_sed_by_lake_with_mean_line.png", dpi = 700, 
        height = 8, width = 12)
@@ -158,19 +158,20 @@ lakeice1 <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2025.c
   rename("lake" = location_name) |> 
   filter(lake == "Lake Fryxell" | lake == "Lake Hoare" | lake == "East Lake Bonney" | lake == "West Lake Bonney") |> 
   #filter(year >= 2016) |> 
-  filter(!grepl("^B", location))
+  filter(!grepl("^B", location) & 
+           lake == "East Lake Bonney")
 
 ggplot(lakeice1, aes(date_time, z_water_m)) + 
-  geom_point() + 
+  geom_point(size = 4) + 
   geom_smooth(se = T) + 
   facet_wrap(vars(lake)) + 
-  theme_linedraw(base_size = 15) + 
+  theme_linedraw(base_size = 28) + 
   #scale_color_brewer(palette = "Set1") +
   xlab("Date") + ylab("Ice Thickness (m)") + 
   ggtitle("Ice thickness (m) 1989-2024", 
           subtitle = "ice to water measurement")
 
-ggsave("plots/manuscript/chapter 1/ice_thickness_total_years.png", dpi = 700, 
+ggsave("plots/manuscript/chapter 1/ELB_ice_thickness_total_years.png", dpi = 700, 
        height = 8, width = 12)
 
 lakeice = lakeice1 |> 

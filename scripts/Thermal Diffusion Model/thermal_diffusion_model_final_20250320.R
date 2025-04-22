@@ -50,7 +50,7 @@ Ma = 28.97              # Molecular Weight of Air kg/mol
 Ca = 1.004              # Specific heat capacity of air J/g*K
 Ch = 1.75e-3            # bulk transfer coefficient as defined in 1979 Parkinson and Washington
 Ce = 1.75e-3            # bulk transfer coefficient as defined in 1979 Parkinson and Washington
-#epsilon = 0.97          # surface emissivity (for estimating LW if we ever get there)
+epsilon = 0.97          # surface emissivity (for estimating LW if we ever get there)
 S = 1367                # solar constant W m^-2
 Tf = 273.16             # Temperature of water freezing (K)
 xLv = 2.500e6           # Latent Heat of Evaporation (J/kg)
@@ -252,7 +252,7 @@ ice_thickness <- read_csv("data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2
   mutate(date_time = mdy_hm(date_time), 
          z_water_m = z_water_m*-1) |> 
   filter(location_name == "East Lake Bonney") |> 
-  filter(date_time > "2016-12-01" & date_time < "2024-04-01")
+  filter(date_time > "2016-12-01" & date_time < "2025-02-01")
 
 
 # Load and prepare the data
@@ -275,12 +275,6 @@ albedo1 <- time_15min |>
   arrange(time) |> 
   fill(ice_abundance, .direction = "down")
 
-# Plot to visualize result
-#ggplot(albedo_filled, aes(time, ice_abundance)) + 
-#  geom_line() + 
-#  geom_point(color = "red", size = 2) +
-#  labs(title = "Interpolated Ice Abundance (15-min intervals)",
-#       subtitle = "Red points = actual data")
 
 
 # load relative humidity data
@@ -388,18 +382,19 @@ time_series <- tibble(
 # plot all input data together to do a visual check
 series <- time_series |> 
   pivot_longer(cols = c(T_air, SW_in, LWR_in, LWR_out, pressure, albedo, relative_humidity, wind), 
-               names_to = "variable", values_to = "data")
+               names_to = "variable", values_to = "data") |> 
+  filter(variable == "albedo")
   
 ggplot(series, aes(time, data)) + 
-  geom_line() + 
-  xlab("Date") + ylab("Parameter") +
-  facet_wrap(vars(variable), scales = "free") + 
-  theme_linedraw(base_size = 20)
+  geom_line(size = 1.5) + 
+  xlab("Date") + ylab("Albedo (unitless)") +
+  #facet_wrap(vars(variable), scales = "free") + 
+  theme_linedraw(base_size = 28)
 
 
 
 setwd("~/Documents/R-Repositories/MCM-LTER-MS")
-ggsave(filename = "plots/manuscript/chapter 2/ice_model_input_data_20250414.png", 
+ggsave(filename = "plots/manuscript/chapter 2/albedo_model_input_data_20250414.png", 
        width = 12, height = 8, dpi = 500)
 
 ###NOTES: The longwave estimations are still a mess. The SW gap fills looks pretty good to me, although there's 
