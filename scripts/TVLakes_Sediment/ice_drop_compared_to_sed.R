@@ -49,11 +49,11 @@ sed.join = ice3 |> left_join(sed2, by = join_by(lake, wateryear)) |>
 ggplot(sed.join) +
   geom_smooth(aes(x = sed, y = ice.diff), method = 'lm', 
               color = 'black', linetype = 2, linewidth = 0.4) +
-  geom_point(aes(x = sed, y = ice.diff)) +
+  geom_point(aes(x = sed, y = ice.diff), size = 3) +
   xlab('Mean Dec-Jan sediment coverage') +
   ylab('∆ Ice thickness between years') +
   facet_wrap(~lake, scales = "free_x") +
-  theme_linedraw(base_size = 20)
+  theme_linedraw(base_size = 28)
 
 ggsave("~/Documents/R-Repositories/MCM-LTER-MS/plots/manuscript/chapter 1/ice_thickness_between_years_20250416.png", 
        height = 8, width = 10, dpi = 500)

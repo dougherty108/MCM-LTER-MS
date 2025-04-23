@@ -67,7 +67,8 @@ all_outputs |>
   #summarize(thickness = max(thickness)) |> 
   ggplot(aes(time, y = thickness)) + 
   geom_line(aes(color = scenario), size = 1.5) + 
-  scale_color_brewer(palette = "Set1") +
+  scale_color_viridis_d() + 
+  #scale_color_brewer(palette = "Set1") +
   labs(x = "Time", y = "Ice Thickness (m)") +
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m), size = 2) + 
   theme_linedraw(base_size = 25)

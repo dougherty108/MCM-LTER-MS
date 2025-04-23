@@ -77,7 +77,7 @@ LB_spectra <- read_csv("~/Google Drive/My Drive/EarthEngine/endmembers_output_LF
   pivot_longer(cols = c(B2, B3, B4, B5, B6, B7, B8), names_to = "dimmest_band_names", 
                values_to = "dim_band_values") |> 
   mutate(dim_band_values = as.numeric(dim_band_values), 
-         lake = "Lake Bonney")
+         lake = "Lake Bonney") 
 
 
 bon_ice <- ggplot(LB_spectra, aes(date, bright_band_values, color = brightness_band_names)) + 
