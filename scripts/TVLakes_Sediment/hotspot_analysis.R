@@ -19,7 +19,7 @@ setwd("~charliedougherty")
 tif_dir <- "Google Drive/My Drive/EarthEngine/landsat/20250325"
 
 # Get list of all .tif files in the directory
-tif_files <- list.files(tif_dir, pattern = "LANDSAT_FRY.*\\.tif$", full.names = TRUE)
+tif_files <- list.files(tif_dir, pattern = "LANDSAT_BON.*\\.tif$", full.names = TRUE)
 
 #tif_files = tif_files[tif_files != 'Google Drive/My Drive/EarthEngine/landsat/20250308/LANDSAT_BON_unmix_mar01_2016-12-13.tif']
 
@@ -32,11 +32,7 @@ mean_raster <- app(raster_stack, fun=var, na.rm = F)
 mean_raster = project(mean_raster, "EPSG:32758")
 
 # Save the output raster
-mean_df <- as.data.frame(mean_raster, xy = TRUE) |> 
-  mutate(
-    #x = x*-1, 
-         #y = y*-1
-    )
+mean_df <- as.data.frame(mean_raster, xy = TRUE) 
 
 colnames(mean_df)[3] = "sediment_var"
 
@@ -50,7 +46,7 @@ ggplot() +
   geom_raster(data = mean_df_LB, aes(x = x, y = y, fill = (sediment_var)*100)) +
   coord_sf(crs = sf::st_crs(32758), datum = sf::st_crs(32758)) +
   scale_fill_gradientn(colors = met_palette) +
-  labs(title = "Lake Hoare", x = "Easting", y = "Northing",
+  labs(title = "Lake Bonney", x = "Easting", y = "Northing",
        fill = "variance") +
   theme_linedraw(base_size = 20) +
   annotation_north_arrow(location = "tr", which_north = "true",
