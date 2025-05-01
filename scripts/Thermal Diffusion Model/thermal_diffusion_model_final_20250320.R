@@ -610,4 +610,7 @@ ggsave(filename = "plots/manuscript/chapter 2/model_input_data_20250406.png",
 write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250406.csv")
 
 
-############## can check the outputs against actual ice thickness in Model_output_interrogation.R
+
+
+
+

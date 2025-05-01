@@ -387,11 +387,11 @@ month_colors <- setNames(palette, all_months)
 # Plot 1
 months1 <- c("Jan", "Feb", "Oct", "Nov", "Dec")
 plot1 <- ggplot(mean_BB_week, aes(date, sediment_abundance * 100)) + 
-  geom_point(aes(fill = month), shape = 21, size = 2) + 
+  geom_point(aes(color = month)) + 
   geom_smooth(se = FALSE) + 
   ylab("Sediment Abundance") + xlab("Date") + 
   ggtitle("Sediment Coverage (%)") + 
-  facet_wrap(vars(lake), scales = "free") + 
+  facet_wrap(vars(lake)) + 
   scale_fill_manual(values = month_colors[months1]) + 
   theme_linedraw(base_size = 20) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
@@ -403,7 +403,7 @@ plot1 <- ggplot(mean_BB_week, aes(date, sediment_abundance * 100)) +
 # Plot 2
 months2 <- c("Jan", "Nov", "Dec")
 plot2 <- ggplot(lakeice, aes(date_time, z_water_m)) + 
-  geom_point(aes(fill = month), shape = 21, size = 2) + 
+  geom_point(aes(color = month)) + 
   geom_smooth(se = FALSE) + 
   ylab("Ice Thickness (m)") + xlab("Date") + 
   ggtitle("Ice Thickness") + 
