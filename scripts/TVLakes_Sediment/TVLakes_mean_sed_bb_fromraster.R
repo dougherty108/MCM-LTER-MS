@@ -62,7 +62,8 @@ setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 output_to_save <- output |> 
   pivot_longer(cols = c(`East Lake Bonney`, `Lake Hoare`, `Lake Fryxell`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |>
   drop_na() |> 
-  mutate(date = ymd(date)#, 
+  mutate(date = ymd(date),
+         sediment_corrected = (sediment - 0.15) / 0.75,
          #ice_abundance = sediment, 
          #sediment_abundance = 1-sediment
          ) |> 
@@ -71,7 +72,7 @@ output_to_save <- output |>
 write_csv(output_to_save, "data/sediment abundance data/LANDSAT_panchromatic.csv")
 
 # Plot results
-ggplot(output_to_save, aes(date, sediment)) + 
+ggplot(output_to_save, aes(date, sediment_corrected)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
   ggtitle("Landsat") + 
