@@ -19,3 +19,9 @@ ggplot(total_data, aes(sediment_abundance, sediment_corrected)) +
   geom_point() + 
   facet_wrap(vars(lake)) + 
   theme_linedraw(base_size = 15)
+
+# shows that the pan band really doesn't work. estaimtes up towards 0.75 sed at times (may not be the correc way to interpret)
+
+# load ice thickness data 
+lakeice = read_csv('data/lake ice/mcmlter-lake-ice_thickness-20250218_0_2025.csv')
+
