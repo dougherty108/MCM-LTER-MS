@@ -5,9 +5,9 @@ library(tidyverse)
 
 setwd("~charliedougherty")
 
-files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/20250325", pattern = ".tif", full.names = TRUE)
+files <- list.files(path = "~/Google Drive/My Drive/EarthEngine/landsat/panchromatic", pattern = ".tif", full.names = TRUE)
 
-setwd("~/Google Drive/My Drive/EarthEngine/landsat/20250325")
+setwd("~/Google Drive/My Drive/EarthEngine/landsat/panchromatic")
 
 # Predefine output tibble
 output <- tibble(
@@ -28,7 +28,7 @@ points_df <- data.frame(
 # Convert to sf object and buffer
 points_sf <- st_as_sf(points_df, coords = c("x", "y"), crs = 3031)  
 # Buffer after ensuring the correct CRS
-buffered_points_sf <- st_buffer(points_sf, dist = 150)
+buffered_points_sf <- st_buffer(points_sf, dist = 300)
 
 # Convert `sf` buffer object to `Spatial` before using extract()
 buffered_points_sp <- as(buffered_points_sf, "Spatial")  
@@ -62,15 +62,16 @@ setwd("~/Documents/R-Repositories/MCM-LTER-MS")
 output_to_save <- output |> 
   pivot_longer(cols = c(`East Lake Bonney`, `Lake Hoare`, `Lake Fryxell`, `West Lake Bonney`), names_to = "lake", values_to = "sediment") |>
   drop_na() |> 
-  mutate(date = ymd(date), 
-         ice_abundance = sediment, 
-         sediment_abundance = 1-sediment) |> 
+  mutate(date = ymd(date)#, 
+         #ice_abundance = sediment, 
+         #sediment_abundance = 1-sediment
+         ) |> 
   drop_na()
 
-write_csv(output_to_save, "data/sediment abundance data/LANDSAT_sediment_abundances_20250409_150m.csv")
+write_csv(output_to_save, "data/sediment abundance data/LANDSAT_panchromatic.csv")
 
 # Plot results
-ggplot(output_to_save, aes(date, sediment_abundance)) + 
+ggplot(output_to_save, aes(date, sediment)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
   ggtitle("Landsat") + 
