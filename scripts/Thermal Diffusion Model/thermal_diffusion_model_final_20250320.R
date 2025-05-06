@@ -62,7 +62,7 @@ k <- 2.3                # Thermal conductivity of ice (W/m/K)
 rho <- 917              # Density of ice (kg/m^3)
 c <- 2100               # Specific heat capacity of ice (J/kg/K)
 alpha <- k / (rho * c)  # Thermal diffusivity (m^2/s)
-L_f <- 3.65e5           # Latent heat of fusion for ice (J/kg)
+#L_f <- 3.65e5           # Latent heat of fusion for ice (J/kg)
 
 # Stability check: Ensure R < 0.5 for stability
 r <- alpha * (dt * 86400) / dx^2  # dt is in days, so multiply by 86400 to convert to seconds
@@ -494,7 +494,7 @@ for (t_idx in 1:nrow(time_series)) {
     ea = ((rh/100)* A * exp((B * (T_air - Tf))/(C + (T_air - Tf))))/100
     
     # compute the density of air slightly conflicts with what we have above
-    rho_air = press * Ma/(R * T_air) * (1 + (epsilon - 1) * (ea/press))
+    #rho_air = press * Ma/(R * T_air) * (1 + (epsilon - 1) * (ea/press))
     
     # Water vapor pressure at the surface assuming surface is the 
     # below freezing
@@ -526,14 +526,14 @@ for (t_idx in 1:nrow(time_series)) {
   
   # Calculate melting at the surface (and ablation)
   if (!is.na(surface_flux) && surface_flux > 0) {
-    dL_surface <- surface_flux * (dt * 86400) / (rho * L_f)
+    dL_surface <- surface_flux * (dt * 86400) / (rho * xLf)
     newL <- newL - dL_surface
   }
   
   # Calculate freezing/melting at the bottom
   if (!is.na(newL) && newL > 0) {
     Q_bottom <- -k * (newT[length(newT) - 1] - newT[length(newT)]) / dx
-    dL_bottom <- Q_bottom * (dt * 86400) / (rho * L_f)
+    dL_bottom <- Q_bottom * (dt * 86400) / (rho * xLf)
     newL <- newL + dL_bottom
   }
   
@@ -573,7 +573,7 @@ results |>
   geom_point(data = ice_thickness, aes(x = date_time, y = z_water_m)) + 
   theme_linedraw(base_size = 20)
 
-ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250414.png", width = 9, height = 6, dpi = 300)
+ggsave(filename = "plots/manuscript/chapter 2/ice_thickness_20250506.png", width = 9, height = 6, dpi = 300)
 
 # tuned output (R^2 = 0.86)
 #write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250414.csv")
@@ -607,7 +607,7 @@ ggsave(filename = "plots/manuscript/chapter 2/model_input_data_20250406.png",
        height = 8, width = 12, dpi = 300)
 
 # save output to model outputs file, interrogation in different script
-write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250406.csv")
+write_csv(results, "data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250506.csv")
 
 
 

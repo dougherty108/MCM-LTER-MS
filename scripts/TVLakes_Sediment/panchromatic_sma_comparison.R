@@ -2,6 +2,7 @@
 
 library(tidyverse)
 library(lubridate)
+library(viridisLite)
 
 # load data
 sma = read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_20250403.csv") |> 
@@ -9,12 +10,22 @@ sma = read_csv("data/sediment abundance data/LANDSAT_sediment_abundances_2025040
   select(date, lake, sediment_abundance, type)
 
 pan = read_csv("data/sediment abundance data/LANDSAT_panchromatic.csv") |> 
-  mutate(sediment_abundance = 1-sediment_corrected) |> 
+  mutate(sediment_abundance = sediment_corrected) |> 
   mutate(type = "panchromatic") |> 
   select(date, lake, sediment_abundance, type)
 
 total_data = rbind(sma, pan) |> 
   mutate(year = year(date))
+
+ggplot(total_data, aes(date, sediment_abundance*100, color = type)) + 
+  geom_point(size = 3) + 
+  scale_colour_viridis_d(option = "E") + 
+  facet_wrap(vars(lake)) +
+  xlab("Date") + ylab("Sediment Estimate (%)") + 
+  theme_linedraw(base_size = 20)
+
+ggsave("plots/manuscript/chapter 1/pan_vs_sma.png", 
+       dpi = 500, height = 8, width = 14)
 
 # shows that the pan band really doesn't work. estaimtes up towards 0.75 sed at times (may not be the correc way to interpret)
 
@@ -50,9 +61,11 @@ fulljoined = full_join(sed_monthly, li_summary) |>
 ##### plot
 ggplot(fulljoined, aes(mean_sed, mean_thickness)) + 
   geom_smooth(method = "lm", se = T) + 
-  geom_point(aes(fill = month), size = 3, shape = 21) + 
+  geom_point(size = 3) + 
   facet_wrap(vars(lake), scales = "free") + 
   ggtitle("October-February") + 
   xlab("Mean Sediment Abundance (%)") + ylab("Mean Ice Thickness (m)") + 
   theme_linedraw(base_size = 28) 
 
+ggsave("plots/manuscript/chapter 1/panchromatic_vs_ice.png", 
+       height = 8, width = 12, dpi = 500)

@@ -4,7 +4,7 @@ library(tidyverse)
 setwd("/Users/charliedougherty/Documents/R-Repositories/MCM-LTER-MS")
 
 # load file
-GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250414.csv") |> 
+GEE_corrected <- read_csv("data/thermal diffusion model data/model_outputs/GEE_output_corrected_20250506.csv") |> 
   group_by(time) |> 
   summarize(thickness = max(thickness)) |> 
   mutate(time = ymd_hms(time)) |> 

@@ -75,8 +75,8 @@ write_csv(output_to_save, "data/sediment abundance data/LANDSAT_panchromatic.csv
 ggplot(output_to_save, aes(date, sediment_corrected)) + 
   geom_point() + 
   facet_wrap(vars(lake)) + 
-  ggtitle("Landsat") + 
-  theme_minimal()
+  ggtitle("Landsat Panchromatic") + 
+  theme_linedraw()
 
 ggplot(output_to_save, aes(date, ice_abundance)) + 
   geom_point() + 
